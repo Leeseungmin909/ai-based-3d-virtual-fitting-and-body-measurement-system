@@ -1,12 +1,4 @@
-"""
-smpl_body.py  (Windows 호환 버전)
-===================================
-PyTorch3D 없이 동작하는 렌더러.
-렌더링 백엔드 우선순위:
-  1. pyrender  (가장 좋은 품질)
-  2. trimesh scene (중간 품질)
-  3. PIL 실루엣 (항상 동작하는 fallback)
-"""
+
 
 from __future__ import annotations
 
