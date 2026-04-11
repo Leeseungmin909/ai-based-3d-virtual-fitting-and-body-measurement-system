@@ -3,9 +3,7 @@ package kr.ac.dongeui.virtualfitting.domain.fitting.entity;
 import jakarta.persistence.*;
 import kr.ac.dongeui.virtualfitting.domain.clothes.entity.Clothes;
 import kr.ac.dongeui.virtualfitting.domain.user.entity.User;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -16,6 +14,8 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Table(name = "fitting_histories")
+@AllArgsConstructor
+@Builder
 @EntityListeners(AuditingEntityListener.class) // 날짜 자동 생성을 위한 리스너 추가
 public class FittingHistory {
 
@@ -34,7 +34,7 @@ public class FittingHistory {
     @Column(columnDefinition = "TEXT")
     private String resultSplatUrl;
 
-    // 피팅 상태 관리 (DB에는 문자열로 저장되도록 EnumType.STRING 지정)
+    // 피팅 상태
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FittingStatus status;
@@ -42,4 +42,9 @@ public class FittingHistory {
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    public void updateStatus(FittingStatus status, String resultSplatUrl) {
+        this.status = status;
+        this.resultSplatUrl = resultSplatUrl;
+    }
 }
