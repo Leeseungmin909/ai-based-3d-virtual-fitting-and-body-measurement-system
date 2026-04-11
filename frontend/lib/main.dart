@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert'; // JSON 변환용 (새로 추가)
 import 'package:http/http.dart' as http; // 통신용 (새로 추가)
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 double? globalUserHeight; // 내 키
 double? globalUserWeight; // 내 몸무게
@@ -64,21 +66,15 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
-  // 🚀 구글 로그인 연동 (시연 영상용 쾌속 모드)
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
 
     try {
-      // =========================================================
-      // [시연용 하드코딩 데이터] 
-      // 실제 구글 팝업을 띄우지 않고, 마치 구글에서 정보를 받아온 것처럼
-      // 팀장님의 자바 서버로 바로 데이터를 꽂아 넣습니다.
-      // =========================================================
       final String mockEmail = "capstone_tester@gmail.com";
       final String mockName = "심사위원";
 
-      // final url = Uri.parse('http://localhost:8080/api/auth/google'); 
       final url = Uri.parse('http://10.0.2.2:8080/api/auth/google');
+      // final url = Uri.parse('http://localhost:8080/api/auth/google'); // 윈도우 데스크톱 테스트용
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -89,12 +85,27 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
-        // 백엔드에서 인증 완료되면 홈 화면으로 부드럽게 이동
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeView()),
-          );
+        // 1. 서버 응답 데이터 파싱
+        final Map<String, dynamic> jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+        
+        // 2. JWT 토큰 추출 (서버에서 주는 키 이름이 token인지 accessToken인지 확인 필요)
+        final String? token = jsonResponse['token'] ?? jsonResponse['accessToken'];
+
+        if (token != null) {
+          // 3. 스마트폰 로컬 저장소에 토큰 저장
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('jwt_token', token);
+
+          // 4. 저장 완료 후 홈 화면으로 이동
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeView()),
+            );
+          }
+        } else {
+          // 응답은 성공(200)인데 토큰이 없는 경우 예외 처리
+          throw Exception('서버 응답에 토큰이 없습니다. 백엔드 응답 형식을 확인하세요.');
         }
       } else {
         if (mounted) {
@@ -106,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('통신 실패: 자바 서버가 켜져 있는지 확인하세요.')),
+          SnackBar(content: Text('통신 실패: $e')),
         );
       }
     } finally {
@@ -122,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.white,
       body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Center( // 화면 정중앙 배치
+        child: Center(
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -142,14 +153,13 @@ class _LoginPageState extends State<LoginPage> {
                   '나만의 3D 가상 피팅룸', 
                   style: TextStyle(fontSize: 16, color: Colors.grey)
                 ),
-                const SizedBox(height: 80), // 버튼 위 여백 확보
+                const SizedBox(height: 80),
                 
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: OutlinedButton.icon(
                     onPressed: _isLoading ? null : _signInWithGoogle,
-                    // 구글 아이콘 느낌을 내는 기본 아이콘 사용
                     icon: _isLoading 
                         ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.g_mobiledata, size: 36, color: Colors.black87),
@@ -159,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.black26), // 구글 스타일의 옅은 테두리
+                      side: const BorderSide(color: Colors.black26),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -167,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                 
                 const SizedBox(height: 30),
                 const Text(
-                  '로그인 시 Fit360의 이용약관 및 개인정보처리방침에 동의하게 됩니다.',
+                  '로그인 시 이용약관 및 개인정보처리방침에 동의하게 됩니다.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
@@ -529,172 +539,230 @@ class ProfileView extends StatelessWidget {
   }
 }
 
-/// 8. 프로필 수정 화면
-class EditProfileView extends StatefulWidget {
-  const EditProfileView({super.key});
 
-  @override
-  State<EditProfileView> createState() => _EditProfileViewState();
-}
-
-class _EditProfileViewState extends State<EditProfileView> {
-  final _nameController = TextEditingController(text: '홍길동');
-  final _emailController = TextEditingController(text: 'hong@example.com');
-  final _heightController = TextEditingController(text: '175');
-  final _weightController = TextEditingController(text: '70');
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _heightController.dispose();
-    _weightController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('프로필 수정'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            onPressed: () => Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeView()),
-              (route) => false,
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('기본 정보', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: '이름', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: '이메일', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 32),
-            const Text('신체 정보', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _heightController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '키 (cm)', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _weightController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '몸무게 (kg)', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
-                child: const Text('저장 완료'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 전역 피팅 히스토리 데이터 (데모용)
-final List<Map<String, String>> globalHistoryItems = [
-  {'name': '베이직 옥스포드 셔츠 (L)', 'date': '2023-10-24', 'status': '적당함'},
-  {'name': '슬림핏 데님 팬츠 (M)', 'date': '2023-10-20', 'status': '약간 큼'},
-  {'name': '오버사이즈 후드티 (XL)', 'date': '2023-10-15', 'status': '적당함'},
-];
-
-/// 9. 피팅 히스토리 화면
-class FittingHistoryView extends StatelessWidget {
+/// 9. 피팅 히스토리 화면 (진짜 서버 연동 버전)
+class FittingHistoryView extends StatefulWidget {
   const FittingHistoryView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('피팅 히스토리'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            onPressed: () => Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeView()),
-              (route) => false,
-            ),
-          ),
-        ],
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: globalHistoryItems.length,
-        separatorBuilder: (context, index) => const Divider(),
-        itemBuilder: (context, index) {
-          final item = globalHistoryItems[index];
-          return ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.checkroom, color: Colors.deepPurple),
-            ),
-            title: Text(item['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('피팅 날짜: ${item['date']}'),
-            trailing: Text(item['status']!,
-                style: TextStyle(
-                    color: item['status'] == '적당함' ? Colors.green : Colors.orange,
-                    fontWeight: FontWeight.bold)),
-          );
-        },
-      ),
-    );
-  }
+  State<FittingHistoryView> createState() => _FittingHistoryViewState();
 }
 
-class PhotoUploadView extends StatelessWidget {
-  const PhotoUploadView({super.key});
+class _FittingHistoryViewState extends State<FittingHistoryView> {
+  List<Map<String, String>> _historyItems = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchHistoryFromServer();
+  }
+
+  // 💡 백엔드에서 내 피팅 기록만 쏙 뽑아오는 핵심 로직 (강화 버전)
+  Future<void> _fetchHistoryFromServer() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+
+      if (token == null) throw Exception('로그인 정보(토큰)가 없습니다.');
+
+      // 💡 환경에 맞게 주소 확인: 에뮬레이터=10.0.2.2 / 크롬웹or윈도우앱=localhost
+      final url = Uri.parse('http://10.0.2.2:8080/api/fitting/history');
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token', 
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // 1. 정상(200) 응답일 때
+      if (response.statusCode == 200) {
+        // 서버가 바디를 아예 비워서 보낸 경우 (데이터 없음 정상 처리)
+        if (response.body.isEmpty) {
+          setState(() { _historyItems = []; _isLoading = false; });
+          return;
+        }
+
+        final decoded = json.decode(utf8.decode(response.bodyBytes));
+        
+        // 백엔드가 List가 아니라 Map(객체)으로 줄 경우를 대비한 유연한 처리
+        List<dynamic> jsonList = [];
+        if (decoded is List) {
+          jsonList = decoded;
+        } else if (decoded is Map && decoded.containsKey('data')) {
+          jsonList = decoded['data'];
+        } else {
+          throw Exception('예상치 못한 데이터 형식: $decoded');
+        }
+
+        setState(() {
+          _historyItems = jsonList.map((data) => {
+            'name': data['clothesName']?.toString() ?? '알 수 없는 옷',
+            'date': data['fittingDate']?.toString() ?? '날짜 없음',
+            'status': data['status']?.toString() ?? '피팅 완료',
+          }).toList();
+          _isLoading = false;
+        });
+
+      // 2. 서버가 "데이터 없음"을 204 또는 404로 정직하게 알려준 경우 (정상 처리)
+      } else if (response.statusCode == 204 || response.statusCode == 404) {
+        setState(() { _historyItems = []; _isLoading = false; });
+      } 
+      // 3. 진짜 서버 에러 (500 등)
+      else {
+        throw Exception('서버 응답 상태 코드: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        // 💡 뭉뚱그려 말하지 않고, '진짜 에러 원인(e)'을 5초 동안 적나라하게 띄웁니다!
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('통신 에러 상세: $e'),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 5), 
+          )
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('3D 메쉬모델 만들기')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('피팅 히스토리', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+      ),
+      // 💡 데이터 로딩 중이면 동그라미 스피너, 비어있으면 안내문구, 있으면 리스트 출력!
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.deepPurple))
+          : _historyItems.isEmpty
+              ? const Center(
+                  child: Text(
+                    '아직 저장된 피팅 내역이 없습니다.\n옷을 선택해 가상 피팅을 진행해보세요!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _historyItems.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final item = _historyItems[index];
+                    return ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                        child: const Icon(Icons.checkroom, color: Colors.deepPurple),
+                      ),
+                      title: Text(item['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('피팅 날짜: ${item['date']}'),
+                      trailing: Text(
+                        item['status']!,
+                        style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  },
+                ),
+    );
+  }
+}
+
+/// 2. 영상 업로드: 실제 스마트폰 갤러리 연동
+class PhotoUploadView extends StatefulWidget {
+  const PhotoUploadView({super.key});
+
+  @override
+  State<PhotoUploadView> createState() => _PhotoUploadViewState();
+}
+
+class _PhotoUploadViewState extends State<PhotoUploadView> {
+  // 💡 선택한 비디오 파일을 담아둘 변수
+  XFile? _selectedVideo;
+  final ImagePicker _picker = ImagePicker();
+
+  // 💡 갤러리를 열어서 비디오를 가져오는 함수
+  Future<void> _pickVideo() async {
+    try {
+      // 스마트폰의 갤러리(비디오 전용)를 엽니다.
+      final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+      
+      if (video != null) {
+        setState(() {
+          _selectedVideo = video;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('영상이 성공적으로 선택되었습니다!')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('영상 선택 오류: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('3D 메쉬모델 만들기', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(color: Colors.deepPurple.shade50, borderRadius: BorderRadius.circular(16)),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.videocam_outlined, size: 60, color: Colors.deepPurple),
-                  SizedBox(height: 16),
-                  Text('10초 전신 영상을 촬영/업로드하세요', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ],
+            // ==========================================
+            // 💡 영상 업로드 버튼 (누르면 갤러리 오픈!)
+            // ==========================================
+            GestureDetector(
+              onTap: _pickVideo, // 클릭 시 갤러리 여는 함수 실행
+              child: Container(
+                height: 250,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  // 영상이 선택되었으면 배경색을 살짝 바꿔서 시각적 피드백 주기
+                  color: _selectedVideo == null ? Colors.deepPurple.shade50 : Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _selectedVideo == null ? Colors.deepPurple.shade200 : Colors.green.shade300, 
+                    width: 2, 
+                    style: BorderStyle.solid
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // 영상이 없을 때와 있을 때 보여주는 아이콘/텍스트 변경
+                    if (_selectedVideo == null) ...[
+                      const Icon(Icons.videocam_outlined, size: 60, color: Colors.deepPurple),
+                      const SizedBox(height: 16),
+                      const Text('터치하여 10초 전신 영상 업로드', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 6),
+                      const Text('(가우시안 스플래팅 스캔용)', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    ] else ...[
+                      const Icon(Icons.check_circle, size: 60, color: Colors.green),
+                      const SizedBox(height: 16),
+                      const Text('영상 선택 완료!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                      const SizedBox(height: 6),
+                      // 선택된 파일의 이름을 보여줍니다.
+                      Text(_selectedVideo!.name, style: const TextStyle(color: Colors.grey, fontSize: 13), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ]
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 30),
             
-            // 💡 요구사항 6: 입력칸 삭제하고 현재 설정된 정보만 보여주기
             const Text('적용될 신체 정보 (설정 기준)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
             const SizedBox(height: 12),
             Container(
@@ -715,12 +783,24 @@ class PhotoUploadView extends StatelessWidget {
               height: 55,
               child: ElevatedButton(
                 onPressed: () {
-                  // 💡 영상 업로드 완료 시 상태를 '아바타 있음'으로 변경!
+                  // 💡 예외 처리: 영상을 선택하지 않으면 다음으로 못 넘어갑니다.
+                  if (_selectedVideo == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('⚠️ 먼저 영상을 업로드해주세요.'), backgroundColor: Colors.redAccent),
+                    );
+                    return;
+                  }
+
+                  // 💡 추후 이 단계에서 파이썬(FastAPI) 서버로 _selectedVideo 파일을 전송하는 로직이 들어갑니다!
                   globalHasAvatar = true; 
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('3D 아바타가 성공적으로 생성되었습니다!')));
                   Navigator.pop(context); // 홈으로 돌아가기
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _selectedVideo == null ? Colors.grey : Colors.deepPurple, 
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
                 child: const Text('3D 모델 생성 시작', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
@@ -1031,9 +1111,8 @@ class FittingView extends StatefulWidget {
 
 class _FittingViewState extends State<FittingView> {
 
-  // 💡 가상 피팅 시작 로직 (예외 처리 포함 완료!)
-  void _startVirtualFitting() {
-    // 1. 아바타가 생성되지 않았을 경우 (예외 처리)
+  // 💡 가상 피팅 시작 및 백엔드(DB) 자동 저장 로직
+  Future<void> _startVirtualFitting() async {
     if (globalHasAvatar == false) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1042,18 +1121,52 @@ class _FittingViewState extends State<FittingView> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      return; // 함수를 여기서 종료하여 피팅 진행을 막습니다.
+      return;
     }
 
-    // 2. 아바타가 있을 경우 (정상 진행)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('생성된 3D 모델에 가상 피팅을 시작합니다...'), 
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.deepPurple,
-      ),
-    );
-    // 추후 여기에 파이썬(AI) 서버로 피팅 요청을 보내는 코드가 들어갑니다.
+    try {
+      // 1. 기기에서 토큰 꺼내기
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+
+      if (token == null) throw Exception('로그인 정보가 없습니다.');
+
+      // 2. 서버에 피팅 결과 저장 요청 (POST)
+      final url = Uri.parse('http://10.0.2.2:8080/api/fitting/history');
+      final response = await http.post(
+        url,
+        headers: {
+          // 💡 여기도 토큰 필수! (누가 피팅했는지 서버가 알아야 하니까요)
+          'Authorization': 'Bearer $token', 
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          // 💡 DB 저장을 위해 현재 선택한 옷의 번호(ID)를 쏴줍니다.
+          'clothesId': widget.selectedClothes.id, 
+        }),
+      );
+
+      // 200(OK) 이거나 201(Created) 이면 성공!
+      if (response.statusCode == 200 || response.statusCode == 201) { 
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('생성된 3D 모델에 가상 피팅을 시작합니다... (서버 DB 저장 완료!)'), 
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.deepPurple,
+            ),
+          );
+        }
+      } else {
+        throw Exception('서버 에러: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('서버 저장 실패: 자바 서버를 확인하세요.'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -1120,7 +1233,6 @@ class _FittingViewState extends State<FittingView> {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    // 버튼을 누르면 위에서 작성한 _startVirtualFitting 함수가 실행됩니다!
                     onPressed: _startVirtualFitting, 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
