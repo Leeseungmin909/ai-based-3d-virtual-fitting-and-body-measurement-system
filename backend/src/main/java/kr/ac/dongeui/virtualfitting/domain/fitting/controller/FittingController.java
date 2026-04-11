@@ -1,10 +1,7 @@
 package kr.ac.dongeui.virtualfitting.domain.fitting.controller;
 
 import kr.ac.dongeui.virtualfitting.domain.fitting.dto.FittingHistoryResponse;
-import kr.ac.dongeui.virtualfitting.domain.fitting.repository.FittingHistoryRepository;
 import kr.ac.dongeui.virtualfitting.domain.fitting.service.FittingService;
-import kr.ac.dongeui.virtualfitting.domain.user.entity.User;
-import kr.ac.dongeui.virtualfitting.domain.user.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -12,36 +9,27 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/fittings")
+@RequestMapping("/api/fitting")
 public class FittingController {
 
-    private final FittingHistoryRepository fittingHistoryRepository;
-    private final UserRepository userRepository;
     private final FittingService fittingService;
 
-    public FittingController(FittingHistoryRepository fittingHistoryRepository,
-                             UserRepository userRepository,
-                             FittingService fittingService) {
-        this.fittingHistoryRepository = fittingHistoryRepository;
-        this.userRepository = userRepository;
+    public FittingController(FittingService fittingService) {
         this.fittingService = fittingService;
     }
 
+    // 내 피팅 히스토리 불러오기
     @GetMapping("/history")
-    public List<FittingHistoryResponse> getMyFittingHistory(Authentication authentication) {
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        return fittingHistoryRepository.findByUserOrderByIdDesc(user).stream()
-                .map(FittingHistoryResponse::new)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<FittingHistoryResponse>> getMyFittingHistory(Authentication authentication) {
+        String email = authentication.getName(); // JWT 토큰에서 이메일 추출
+        List<FittingHistoryResponse> history = fittingService.getMyFittingHistory(email);
+        return ResponseEntity.ok(history);
     }
 
-    @PostMapping("/request")
+    // 가상 피팅 요청 및 히스토리 저장
+    @PostMapping("/history")
     public ResponseEntity<Map<String, Object>> requestVirtualFitting(
             Authentication authentication,
             @RequestBody Map<String, Long> requestData) {
@@ -49,27 +37,21 @@ public class FittingController {
         String userEmail = authentication.getName();
         Long clothesId = requestData.get("clothesId");
 
-        System.out.println("피팅 요청 수신. 유저: " + userEmail + ", 옷 번호: " + clothesId);
-
         Long fittingId = fittingService.requestFitting(userEmail, clothesId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "PENDING");
         response.put("fittingId", fittingId);
-        response.put("message", "파이썬 서버로 가우시안 스플래팅 렌더링을 요청했습니다. 잠시만 기다려주세요.");
+        response.put("message", "피팅 요청 및 히스토리 저장 성공");
 
         return ResponseEntity.ok(response);
     }
 
-    // 파이썬 서버 전용 웹훅 (Callback) API
     @PostMapping("/webhook/complete")
     public ResponseEntity<String> completeVirtualFitting(@RequestBody Map<String, Object> requestData) {
-        // 파이썬 서버가 보낸 JSON 데이터에서 값 추출
         Long fittingId = ((Number) requestData.get("fittingId")).longValue();
         String resultSplatUrl = (String) requestData.get("resultSplatUrl");
-
         fittingService.completeFitting(fittingId, resultSplatUrl);
-
         return ResponseEntity.ok("자바 서버: 피팅 결과 업데이트 완료");
     }
 }
