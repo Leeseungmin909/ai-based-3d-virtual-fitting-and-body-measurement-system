@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Provides APIs for storing and reading user body measurements.
+ * 사용자 신체 치수 저장과 조회 API를 제공한다.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -30,7 +30,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * Reads measurements for a specific user ID, mainly for admin/test usage.
+     * 관리자 또는 테스트 용도로 특정 사용자 ID의 치수 정보를 조회한다.
      */
     @GetMapping("/{userId}/measurements")
     public ResponseEntity<UserMeasurementResponse> getUserMeasurements(@PathVariable Long userId) {
@@ -38,7 +38,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * Creates or updates measurements for a specific user ID.
+     * 특정 사용자 ID의 치수 정보를 생성하거나 갱신한다.
      */
     @PutMapping("/{userId}/measurements")
     public ResponseEntity<UserMeasurementResponse> upsertUserMeasurements(
@@ -48,7 +48,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * Reads measurements for the currently authenticated user.
+     * 현재 인증된 사용자의 치수 정보를 조회한다.
      */
     @GetMapping("/me/measurements")
     public ResponseEntity<UserMeasurementResponse> getMyMeasurements(Authentication authentication) {
@@ -57,7 +57,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * Creates or updates measurements for the currently authenticated user.
+     * 현재 인증된 사용자의 치수 정보를 생성하거나 갱신한다.
      */
     @PutMapping("/me/measurements")
     public ResponseEntity<UserMeasurementResponse> upsertMyMeasurements(
@@ -68,7 +68,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * Looks up the current user from Spring Security authentication.
+     * Spring Security 인증 정보에서 현재 사용자를 조회한다.
      */
     private User getAuthenticatedUser(Authentication authentication) {
         return userRepository.findByEmail(authentication.getName())

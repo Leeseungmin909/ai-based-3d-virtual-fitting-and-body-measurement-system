@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../clothes/screens/clothing_select_view.dart';
 import '../../home/screens/home_view.dart';
 
-/// Placeholder viewer screen for future 3D fitting results.
+/// 추후 3D 피팅 결과를 보여주기 위한 임시 뷰어 화면이다.
 class MeshView extends StatelessWidget {
   const MeshView({super.key});
 

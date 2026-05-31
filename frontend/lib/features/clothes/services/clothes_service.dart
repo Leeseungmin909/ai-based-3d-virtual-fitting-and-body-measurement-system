@@ -1,14 +1,14 @@
 import '../../../core/services/api_client.dart';
 import '../models/clothes.dart';
 
-/// Fetches clothes from Spring and converts them into Flutter models.
+/// Spring에서 옷 목록을 받아 Flutter 모델로 변환한다.
 class ClothesService {
   ClothesService({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
-  /// Loads the clothes list shown on the clothes selection screen.
+  /// 옷 선택 화면에 표시할 옷 목록을 불러온다.
   Future<List<Clothes>> fetchClothes() async {
     final response = await _apiClient.getJson('/api/clothes');
     if (response is! List) {

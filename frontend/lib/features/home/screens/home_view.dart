@@ -10,7 +10,7 @@ import '../../profile/screens/profile_view.dart';
 import '../../scan/screens/photo_upload_view.dart';
 import '../../settings/screens/api_settings_view.dart';
 
-/// Home menu screen that routes users to the main features.
+/// 주요 기능 화면으로 이동하는 홈 메뉴 화면이다.
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 

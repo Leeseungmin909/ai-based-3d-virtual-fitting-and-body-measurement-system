@@ -1,6 +1,6 @@
 import '../../../core/services/api_client.dart';
 
-/// Saves the user height through the Spring user API.
+/// Spring 사용자 API를 통해 사용자의 키 정보를 저장한다.
 class UserService {
   UserService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 

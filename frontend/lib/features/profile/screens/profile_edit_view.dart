@@ -5,7 +5,7 @@ import '../../../core/state/user_profile_store.dart';
 import '../../home/screens/home_view.dart';
 import '../services/user_service.dart';
 
-/// Screen that edits height and saves it through the Spring API.
+/// 키 정보를 수정하고 Spring API로 저장하는 화면이다.
 class ProfileEditView extends StatefulWidget {
   const ProfileEditView({super.key});
 

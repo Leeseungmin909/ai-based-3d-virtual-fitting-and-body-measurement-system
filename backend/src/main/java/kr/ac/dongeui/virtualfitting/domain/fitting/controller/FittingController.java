@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Handles fitting request creation, history lookup, and AI completion callbacks.
+ * 피팅 요청 생성, 기록 조회, AI 완료 콜백을 처리한다.
  */
 @RestController
 @RequestMapping("/api/fitting")
@@ -30,7 +30,7 @@ public class FittingController {
     }
 
     /**
-     * Returns current user fitting histories in newest-first order.
+     * 현재 사용자의 피팅 기록을 최신순으로 반환한다.
      */
     @GetMapping("/history")
     public ResponseEntity<List<FittingHistoryResponse>> getMyFittingHistory(Authentication authentication) {
@@ -38,7 +38,7 @@ public class FittingController {
     }
 
     /**
-     * Creates a PENDING fitting request for the selected clothes.
+     * 선택한 옷에 대해 PENDING 상태의 피팅 요청을 생성한다.
      */
     @PostMapping("/history")
     public ResponseEntity<FittingCreateResponse> requestVirtualFitting(
@@ -49,7 +49,7 @@ public class FittingController {
     }
 
     /**
-     * Stores the result URL when the AI pipeline reports completion.
+     * AI 파이프라인이 완료를 보고하면 결과 URL을 저장한다.
      */
     @PostMapping("/webhook/complete")
     public ResponseEntity<Map<String, String>> completeVirtualFitting(@RequestBody Map<String, Object> requestData) {

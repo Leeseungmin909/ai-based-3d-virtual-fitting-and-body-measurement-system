@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'token_storage.dart';
 
-/// Classifies API errors so screens can show the right failure message.
+/// 화면에서 적절한 실패 메시지를 보여줄 수 있도록 API 오류를 분류한다.
 enum ApiExceptionKind {
   connection,
   loginRequired,
@@ -17,7 +17,7 @@ enum ApiExceptionKind {
   unknown,
 }
 
-/// Exception that carries HTTP status and UI-facing error category.
+/// HTTP 상태 코드와 화면 표시용 오류 분류를 함께 담는 예외이다.
 class ApiException implements Exception {
   const ApiException(
     this.message, {
@@ -33,7 +33,7 @@ class ApiException implements Exception {
   String toString() => statusCode == null ? message : '$message ($statusCode)';
 }
 
-/// Handles Spring API calls, JWT headers, and response parsing.
+/// Spring API 호출, JWT 헤더 추가, 응답 파싱을 처리한다.
 class ApiClient {
   ApiClient({TokenStorage? tokenStorage})
     : _tokenStorage = tokenStorage ?? TokenStorage();
@@ -42,7 +42,7 @@ class ApiClient {
 
   final TokenStorage _tokenStorage;
 
-  /// Sends a JSON GET request and returns the decoded response.
+  /// JSON GET 요청을 보내고 파싱된 응답을 반환한다.
   Future<dynamic> getJson(String path, {bool authorized = false}) async {
     return _send(
       () async => http.get(
@@ -52,7 +52,7 @@ class ApiClient {
     );
   }
 
-  /// Sends a JSON POST request and returns the decoded response.
+  /// JSON POST 요청을 보내고 파싱된 응답을 반환한다.
   Future<dynamic> postJson(
     String path,
     Map<String, dynamic> body, {
@@ -67,7 +67,7 @@ class ApiClient {
     );
   }
 
-  /// Sends a JSON PUT request and returns the decoded response.
+  /// JSON PUT 요청을 보내고 파싱된 응답을 반환한다.
   Future<dynamic> putJson(
     String path,
     Map<String, dynamic> body, {
@@ -82,12 +82,12 @@ class ApiClient {
     );
   }
 
-  /// Sends a form-urlencoded POST request.
+  /// form-urlencoded POST 요청을 보낸다.
   Future<dynamic> postForm(String path, Map<String, String> body) async {
     return _send(() async => http.post(ApiConfig.uri(path), body: body));
   }
 
-  /// Applies common timeout, connection, and server error handling.
+  /// 공통 timeout, 연결 실패, 서버 오류 처리를 적용한다.
   Future<dynamic> _send(Future<http.Response> Function() request) async {
     try {
       final response = await request().timeout(_timeout);
@@ -109,7 +109,7 @@ class ApiClient {
     }
   }
 
-  /// Adds the stored JWT token to Authorization for protected requests.
+  /// 보호된 요청에 저장된 JWT 토큰을 Authorization 헤더로 추가한다.
   Future<Map<String, String>> _headers({required bool authorized}) async {
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (authorized) {
@@ -125,7 +125,7 @@ class ApiClient {
     return headers;
   }
 
-  /// Checks HTTP success and decodes JSON or plain text responses.
+  /// HTTP 성공 여부를 확인하고 JSON 또는 일반 텍스트 응답을 파싱한다.
   dynamic _decode(http.Response response) {
     if (response.statusCode == 204 || response.bodyBytes.isEmpty) {
       return null;
@@ -148,7 +148,7 @@ class ApiClient {
     }
   }
 
-  /// Converts HTTP status codes into UI-facing error categories.
+  /// HTTP 상태 코드를 화면 표시용 오류 분류로 변환한다.
   ApiExceptionKind _kindForStatus(int statusCode) {
     if (statusCode == 401 || statusCode == 403) {
       return ApiExceptionKind.loginRequired;

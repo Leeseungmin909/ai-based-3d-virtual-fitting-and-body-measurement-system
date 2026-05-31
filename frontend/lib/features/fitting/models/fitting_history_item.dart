@@ -1,4 +1,4 @@
-/// Model used by the UI after parsing fitting history responses.
+/// 피팅 기록 응답을 파싱한 뒤 UI에서 사용하는 모델이다.
 class FittingHistoryItem {
   const FittingHistoryItem({
     required this.id,

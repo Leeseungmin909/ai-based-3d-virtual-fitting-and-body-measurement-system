@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'mesh_view.dart';
 
-/// Temporary entry screen for video capture/upload before AI integration.
+/// AI 연동 전 영상 촬영 및 업로드 흐름을 위한 임시 진입 화면이다.
 class AiScanView extends StatefulWidget {
   const AiScanView({super.key});
 

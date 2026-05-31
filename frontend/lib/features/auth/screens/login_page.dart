@@ -5,7 +5,7 @@ import '../../home/screens/home_view.dart';
 import '../../settings/screens/api_settings_view.dart';
 import '../services/auth_service.dart';
 
-/// Screen where users start the mock login flow.
+/// 사용자가 mock 로그인 흐름을 시작하는 화면이다.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 

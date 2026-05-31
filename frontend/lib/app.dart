@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'features/auth/screens/login_page.dart';
 
-/// Defines the shared app theme and initial route.
+/// 앱 공통 테마와 최초 화면을 정의한다.
 class VirtualFittingApp extends StatelessWidget {
   const VirtualFittingApp({super.key});
 

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Handles user login, JWT issuing, and height synchronization.
+ * 사용자 로그인, JWT 발급, 키 정보 동기화를 처리한다.
  */
 @Transactional
 @Service
@@ -28,7 +28,7 @@ public class UserService {
     }
 
     /**
-     * Handles mock Google login by creating or loading a user and issuing a JWT.
+     * mock Google 로그인 요청에서 사용자를 생성 또는 조회하고 JWT를 발급한다.
      */
     public LoginResult googleLoginOrSignup(String email, String name) {
         if (email == null || email.isBlank()) {
@@ -50,7 +50,7 @@ public class UserService {
     }
 
     /**
-     * Stores the user height in both users and user_measurements.
+     * 사용자 키를 users와 user_measurements에 함께 저장한다.
      */
     public User updateHeight(String email, Double heightCm) {
         if (heightCm == null || heightCm <= 0) {
@@ -66,7 +66,7 @@ public class UserService {
     }
 
     /**
-     * Creates the measurement record when missing, otherwise updates only height.
+     * 치수 기록이 없으면 생성하고, 있으면 키 정보만 갱신한다.
      */
     private void upsertMeasurementHeight(User user, Double heightCm) {
         UserMeasurement measurement = measurementRepository.findByUserId(user.getId())

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Handles persistence of clothes measurements and asset URLs.
+ * 옷 치수와 에셋 URL 저장을 처리한다.
  */
 @Service
 @Transactional
@@ -20,7 +20,7 @@ public class ClothesService {
     }
 
     /**
-     * Converts the request DTO into a Clothes entity and saves it.
+     * 요청 DTO를 Clothes 엔티티로 변환해 저장한다.
      */
     public Long createClothes(ClothesCreateRequest request) {
         Clothes clothes = new Clothes();

@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// User profile values shared across Flutter screens.
+/// Flutter 화면 간에 공유되는 사용자 프로필 값이다.
 class UserProfile {
   const UserProfile({this.heightCm, this.hasAvatar = false});
 
@@ -10,7 +10,7 @@ class UserProfile {
   bool get needsSetup => heightCm == null;
 }
 
-/// Keeps user profile values in memory after login/sign-up.
+/// 로그인 또는 회원가입 후 사용자 프로필 값을 메모리에 유지한다.
 class UserProfileStore {
   static const _heightKey = 'user_height_cm';
   static const _hasAvatarKey = 'user_has_avatar';

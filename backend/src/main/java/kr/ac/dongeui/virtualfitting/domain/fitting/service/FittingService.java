@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Handles fitting history creation, lookup, and completion state updates.
+ * 피팅 기록 생성, 조회, 완료 상태 갱신을 처리한다.
  */
 @Service
 public class FittingService {
@@ -33,7 +33,7 @@ public class FittingService {
     }
 
     /**
-     * Finds the user by email and returns fitting histories in newest-first order.
+     * 이메일로 사용자를 찾고 최신순 피팅 기록을 반환한다.
      */
     @Transactional(readOnly = true)
     public List<FittingHistoryResponse> getMyFittingHistory(String email) {
@@ -44,7 +44,7 @@ public class FittingService {
     }
 
     /**
-     * Validates the selected clothes and creates a PENDING fitting history.
+     * 선택한 옷을 검증하고 PENDING 상태의 피팅 기록을 생성한다.
      */
     @Transactional
     public FittingHistory requestFitting(String email, Long clothesId) {
@@ -66,7 +66,7 @@ public class FittingService {
     }
 
     /**
-     * Stores the AI completion callback result URL and SUCCESS status.
+     * AI 완료 콜백의 결과 URL과 SUCCESS 상태를 저장한다.
      */
     @Transactional
     public void completeFitting(Long fittingId, String resultUrl) {
@@ -76,7 +76,7 @@ public class FittingService {
     }
 
     /**
-     * Finds a user by authenticated email.
+     * 인증된 이메일로 사용자를 조회한다.
      */
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)

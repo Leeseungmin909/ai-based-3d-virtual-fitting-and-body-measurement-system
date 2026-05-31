@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Provides authentication APIs used by the Flutter mock login flow.
+ * Flutter mock 로그인 흐름에서 사용하는 인증 API를 제공한다.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -22,7 +22,7 @@ public class AuthController {
     }
 
     /**
-     * Creates or loads a user from email/name and returns a JWT.
+     * 이메일과 이름으로 사용자를 생성 또는 조회하고 JWT를 반환한다.
      */
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@RequestParam String email, @RequestParam String name) {

@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
- * Spring Boot application entry point.
+ * Spring Boot 애플리케이션 시작점이다.
  */
 @EnableAsync
 @EnableJpaAuditing

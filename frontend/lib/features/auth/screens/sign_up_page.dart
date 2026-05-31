@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../home/screens/home_view.dart';
 
-/// Screen that collects name and height before entering the app.
+/// 앱 진입 전에 이름과 키 정보를 입력받는 화면이다.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 

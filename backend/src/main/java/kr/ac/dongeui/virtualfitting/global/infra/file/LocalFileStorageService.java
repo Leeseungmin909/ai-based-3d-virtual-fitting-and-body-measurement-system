@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
- * Stores uploaded files under the local storage directory and returns public URLs.
+ * 업로드 파일을 로컬 저장소에 저장하고 공개 URL을 반환한다.
  */
 @Service
 public class LocalFileStorageService {
@@ -27,7 +27,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * Sanitizes folder and file names, then stores the file with a UUID prefix.
+     * 폴더명과 파일명을 정리한 뒤 UUID 접두사를 붙여 저장한다.
      */
     public String uploadFile(MultipartFile file, String folder) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -51,7 +51,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * Sanitizes folder path input to prevent parent directory traversal.
+     * 상위 디렉터리 접근을 막기 위해 폴더 경로 입력값을 정리한다.
      */
     private String sanitizePathPart(String value) {
         String sanitized = value.replace('\\', '/').replaceAll("[^a-zA-Z0-9/_-]", "_");
@@ -63,7 +63,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * Removes unsafe characters from the original filename.
+     * 원본 파일명에서 안전하지 않은 문자를 제거한다.
      */
     private String sanitizeFilename(String filename) {
         String value = filename == null || filename.isBlank() ? "file" : filename;
@@ -72,7 +72,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * Normalizes the static public path to always start with a slash.
+     * 정적 공개 경로가 항상 슬래시로 시작하도록 정규화한다.
      */
     private String normalizePublicPath(String value) {
         String normalized = value == null || value.isBlank() ? "/storage" : value.trim();

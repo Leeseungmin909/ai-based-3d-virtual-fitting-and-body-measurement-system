@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Stores and reads the JWT token from local persistent storage.
+/// JWT 토큰을 로컬 저장소에 저장하고 읽는다.
 class TokenStorage {
   static const _tokenKey = 'jwt_token';
 

@@ -1,6 +1,6 @@
 import '../services/api_client.dart';
 
-/// Converts API exceptions into user-facing screen messages.
+/// API 예외를 사용자가 이해할 수 있는 화면 메시지로 변환한다.
 class UiErrorMessages {
   const UiErrorMessages._();
 

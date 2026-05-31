@@ -6,7 +6,7 @@ import '../../../core/state/user_profile_store.dart';
 import '../../clothes/models/clothes.dart';
 import '../services/fitting_service.dart';
 
-/// Shows selected clothes dimensions and creates a fitting request.
+/// 선택한 옷의 치수를 보여주고 피팅 요청을 생성한다.
 class FittingView extends StatefulWidget {
   const FittingView({super.key, required this.selectedClothes});
 
@@ -148,7 +148,7 @@ class _FittingViewState extends State<FittingView> {
   }
 }
 
-/// Displays one clothes dimension as a label/value row.
+/// 옷 치수 한 항목을 라벨과 값 형태로 표시한다.
 class _DimensionRow extends StatelessWidget {
   const _DimensionRow({required this.label, required this.value});
 

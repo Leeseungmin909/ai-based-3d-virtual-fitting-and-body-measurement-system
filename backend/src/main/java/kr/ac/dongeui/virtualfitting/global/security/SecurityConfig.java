@@ -16,7 +16,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * Configures JWT authentication, CORS, and public API paths.
+ * JWT 인증, CORS, 공개 API 경로를 설정한다.
  */
 @Configuration
 @EnableWebSecurity
@@ -29,7 +29,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Separates public APIs from protected APIs and registers the JWT filter.
+     * 공개 API와 보호 API를 분리하고 JWT 필터를 등록한다.
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -54,7 +54,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Allows Flutter development clients and local test clients through CORS.
+     * Flutter 개발 클라이언트와 로컬 테스트 클라이언트의 CORS 요청을 허용한다.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

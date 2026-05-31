@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Provides clothes list lookup and test-time clothes registration APIs.
+ * 옷 목록 조회와 테스트용 옷 등록 API를 제공한다.
  */
 @RestController
 @RequestMapping("/api/clothes")
@@ -32,7 +32,7 @@ public class ClothesController {
     }
 
     /**
-     * Returns all clothes for the Flutter clothes selection screen.
+     * Flutter 옷 선택 화면에 필요한 전체 옷 목록을 반환한다.
      */
     @GetMapping
     public List<ClothesResponse> getAllClothes() {
@@ -42,7 +42,7 @@ public class ClothesController {
     }
 
     /**
-     * Stores clothes metadata for local testing or seed data entry.
+     * 로컬 테스트 또는 초기 데이터 입력용 옷 메타데이터를 저장한다.
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createClothes(@RequestBody ClothesCreateRequest request) {

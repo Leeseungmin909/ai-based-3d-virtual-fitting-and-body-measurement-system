@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Stores user body measurements from AI result JSON or Flutter input.
+ * AI 결과 JSON 또는 Flutter 입력값으로 사용자 신체 치수를 저장한다.
  */
 @Service
 @Transactional
@@ -25,7 +25,7 @@ public class UserMeasurementService {
     }
 
     /**
-     * Finds the body measurement record by user ID.
+     * 사용자 ID로 신체 치수 기록을 조회한다.
      */
     @Transactional(readOnly = true)
     public UserMeasurementResponse getByUserId(Long userId) {
@@ -35,7 +35,7 @@ public class UserMeasurementService {
     }
 
     /**
-     * Creates or updates a user body measurement record.
+     * 사용자 신체 치수 기록을 생성하거나 갱신한다.
      */
     public UserMeasurementResponse upsertByUserId(Long userId, UserMeasurementUpsertRequest request) {
         User user = userRepository.findById(userId)

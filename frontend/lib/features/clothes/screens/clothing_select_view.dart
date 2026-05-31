@@ -6,7 +6,7 @@ import '../../fitting/screens/fitting_view.dart';
 import '../models/clothes.dart';
 import '../services/clothes_service.dart';
 
-/// Shows clothes loaded from the server and opens the fitting request screen.
+/// 서버에서 불러온 옷 목록을 보여주고 피팅 요청 화면으로 이동한다.
 class ClothingSelectView extends StatefulWidget {
   const ClothingSelectView({super.key});
 
@@ -128,7 +128,7 @@ class _ClothingSelectViewState extends State<ClothingSelectView> {
   }
 }
 
-/// Renders one clothes item as a selectable card.
+/// 옷 한 개를 선택 가능한 카드로 렌더링한다.
 class _ClothesTile extends StatelessWidget {
   const _ClothesTile({required this.clothes});
 
@@ -185,7 +185,7 @@ class _ClothesTile extends StatelessWidget {
   }
 }
 
-/// Shows loading, empty, or error states in the clothes screen.
+/// 옷 목록 화면의 로딩, 빈 목록, 오류 상태를 표시한다.
 class _MessageState extends StatelessWidget {
   const _MessageState({
     required this.icon,

@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Provides local-disk file upload APIs instead of S3.
+ * S3 대신 로컬 디스크 파일 업로드 API를 제공한다.
  */
 @RestController
 @RequestMapping("/api/files")
@@ -25,7 +25,7 @@ public class FileUploadController {
     }
 
     /**
-     * Stores an uploaded file under the requested folder and returns its public URL.
+     * 업로드 파일을 요청한 폴더에 저장하고 공개 URL을 반환한다.
      */
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadFile(

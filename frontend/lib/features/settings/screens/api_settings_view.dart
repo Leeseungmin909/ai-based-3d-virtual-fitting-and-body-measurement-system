@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/config/api_config.dart';
 
-/// Lets the user change the Spring API server URL for local demos.
+/// 로컬 시연용 Spring API 서버 주소를 변경할 수 있게 한다.
 class ApiSettingsView extends StatefulWidget {
   const ApiSettingsView({super.key});
 
