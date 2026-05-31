@@ -6,7 +6,7 @@ import '../../../core/state/user_profile_store.dart';
 import '../../clothes/models/clothes.dart';
 import '../services/fitting_service.dart';
 
-/// ??? ??? ??? ???? ?? ??? ???? ????.
+/// Shows selected clothes dimensions and creates a fitting request.
 class FittingView extends StatefulWidget {
   const FittingView({super.key, required this.selectedClothes});
 
@@ -148,7 +148,7 @@ class _FittingViewState extends State<FittingView> {
   }
 }
 
-/// ?? ?? ? ?? label/value ??? ????.
+/// Displays one clothes dimension as a label/value row.
 class _DimensionRow extends StatelessWidget {
   const _DimensionRow({required this.label, required this.value});
 

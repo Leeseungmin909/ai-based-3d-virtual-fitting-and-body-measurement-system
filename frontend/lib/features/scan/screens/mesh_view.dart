@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../clothes/screens/clothing_select_view.dart';
 import '../../home/screens/home_view.dart';
 
-/// ?? ?? 3D ??? ??? ??? ???? ?? ?? ????.
+/// Placeholder viewer screen for future 3D fitting results.
 class MeshView extends StatelessWidget {
   const MeshView({super.key});
 

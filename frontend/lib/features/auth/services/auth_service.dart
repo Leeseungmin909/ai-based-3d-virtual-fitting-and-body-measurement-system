@@ -1,7 +1,7 @@
 import '../../../core/services/api_client.dart';
 import '../../../core/services/token_storage.dart';
 
-/// ??? Google ??? ?? Spring mock ??? API? ????.
+/// Calls the Spring mock login API instead of a real Google login flow.
 class AuthService {
   AuthService({ApiClient? apiClient, TokenStorage? tokenStorage})
     : _apiClient = apiClient ?? ApiClient(),
@@ -10,7 +10,7 @@ class AuthService {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
 
-  /// ??? ???? ????? ??? JWT? ????.
+  /// Logs in with a test account and stores the returned JWT.
   Future<void> signInWithGoogleMock() async {
     final response = await _apiClient.postForm('/api/auth/google', {
       'email': 'capstone_tester@gmail.com',
@@ -35,6 +35,6 @@ class AuthService {
     await _tokenStorage.saveToken(token);
   }
 
-  /// ??? JWT? ??? ???? ??? ???.
+  /// Clears the stored JWT token.
   Future<void> signOut() => _tokenStorage.clearToken();
 }

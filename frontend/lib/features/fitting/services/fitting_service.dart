@@ -1,14 +1,14 @@
 import '../../../core/services/api_client.dart';
 import '../models/fitting_history_item.dart';
 
-/// ?? ?? ??? ?? ?? ?? API? ???.
+/// Wraps fitting history and fitting request APIs.
 class FittingService {
   FittingService({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
-  /// ?? ???? ???? ?? ??? ????.
+  /// Fetches fitting histories for the current logged-in user.
   Future<List<FittingHistoryItem>> fetchHistory() async {
     final response = await _apiClient.getJson(
       '/api/fitting/history',
@@ -34,7 +34,7 @@ class FittingService {
         .toList();
   }
 
-  /// ??? ?? ID? ?? ?? ??? ????.
+  /// Creates a fitting request history for the selected clothes ID.
   Future<void> createHistory(int clothesId) async {
     await _apiClient.postJson('/api/fitting/history', {
       'clothesId': clothesId,

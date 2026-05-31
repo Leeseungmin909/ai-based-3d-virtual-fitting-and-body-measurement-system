@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/state/user_profile_store.dart';
 import 'profile_edit_view.dart';
 
-/// ?? ??? ??? ??? ??? ????.
+/// Shows the currently stored user profile information.
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
 

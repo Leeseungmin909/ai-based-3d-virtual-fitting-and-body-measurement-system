@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * AI ?? JSON ?? Flutter ????? ??? ??? ?? ??? ????.
+ * Stores user body measurements from AI result JSON or Flutter input.
  */
 @Service
 @Transactional
@@ -25,7 +25,7 @@ public class UserMeasurementService {
     }
 
     /**
-     * ??? ID ???? ??? ?? ??? ????.
+     * Finds the body measurement record by user ID.
      */
     @Transactional(readOnly = true)
     public UserMeasurementResponse getByUserId(Long userId) {
@@ -35,7 +35,7 @@ public class UserMeasurementService {
     }
 
     /**
-     * ?? ?? ???? ????? ?? ?? ????.
+     * Creates or updates a user body measurement record.
      */
     public UserMeasurementResponse upsertByUserId(Long userId, UserMeasurementUpsertRequest request) {
         User user = userRepository.findById(userId)

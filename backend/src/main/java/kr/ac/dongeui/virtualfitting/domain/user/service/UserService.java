@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * ??? ???, JWT ??, ? ?? ???? ????.
+ * Handles user login, JWT issuing, and height synchronization.
  */
 @Transactional
 @Service
@@ -28,7 +28,7 @@ public class UserService {
     }
 
     /**
-     * mock Google ??? ??? ??? ??/??? JWT ???? ????.
+     * Handles mock Google login by creating or loading a user and issuing a JWT.
      */
     public LoginResult googleLoginOrSignup(String email, String name) {
         if (email == null || email.isBlank()) {
@@ -50,7 +50,7 @@ public class UserService {
     }
 
     /**
-     * ??? ?? users? user_measurements ??? ????.
+     * Stores the user height in both users and user_measurements.
      */
     public User updateHeight(String email, Double heightCm) {
         if (heightCm == null || heightCm <= 0) {
@@ -66,7 +66,7 @@ public class UserService {
     }
 
     /**
-     * ?? ???? ??? ???, ??? ? ?? ????.
+     * Creates the measurement record when missing, otherwise updates only height.
      */
     private void upsertMeasurementHeight(User user, Double heightCm) {
         UserMeasurement measurement = measurementRepository.findByUserId(user.getId())

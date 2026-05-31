@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * ?? storage ????? HTTP ?? ???? ????.
+ * Exposes the local storage directory through HTTP static resources.
  */
 @Configuration
 public class StaticResourceConfig implements WebMvcConfigurer {
@@ -25,7 +25,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     }
 
     /**
-     * /storage/** ??? ?? storage ?? ??? ????.
+     * Maps /storage/** requests to files under the local storage directory.
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -34,7 +34,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     }
 
     /**
-     * ???? ?? ??? ???? ?? ?? ?? ?? ??? ????.
+     * Normalizes blank or malformed public path settings.
      */
     private String normalizePublicPath(String value) {
         String normalized = value == null || value.isBlank() ? "/storage" : value.trim();

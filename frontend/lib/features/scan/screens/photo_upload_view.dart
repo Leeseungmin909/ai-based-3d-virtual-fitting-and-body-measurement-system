@@ -3,7 +3,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/state/user_profile_store.dart';
 
-/// ???? ??? ???? ?? ??? ?? ????.
+/// Local file selection screen used before the final AI upload API exists.
 class PhotoUploadView extends StatefulWidget {
   const PhotoUploadView({super.key});
 

@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'token_storage.dart';
 
-/// ???? ?? ??? ??? ? ??? API ?? ??? ????.
+/// Classifies API errors so screens can show the right failure message.
 enum ApiExceptionKind {
   connection,
   loginRequired,
@@ -17,7 +17,7 @@ enum ApiExceptionKind {
   unknown,
 }
 
-/// HTTP ?? ??? ?? ??? ?? ??? ?? ?? ???.
+/// Exception that carries HTTP status and UI-facing error category.
 class ApiException implements Exception {
   const ApiException(
     this.message, {
@@ -33,7 +33,7 @@ class ApiException implements Exception {
   String toString() => statusCode == null ? message : '$message ($statusCode)';
 }
 
-/// Spring API ??, JWT ?? ??, ?? ??? ?? ????.
+/// Handles Spring API calls, JWT headers, and response parsing.
 class ApiClient {
   ApiClient({TokenStorage? tokenStorage})
     : _tokenStorage = tokenStorage ?? TokenStorage();
@@ -42,7 +42,7 @@ class ApiClient {
 
   final TokenStorage _tokenStorage;
 
-  /// JSON GET ??? ??? ???? ??? ????.
+  /// Sends a JSON GET request and returns the decoded response.
   Future<dynamic> getJson(String path, {bool authorized = false}) async {
     return _send(
       () async => http.get(
@@ -52,7 +52,7 @@ class ApiClient {
     );
   }
 
-  /// JSON POST ??? ??? ???? ??? ????.
+  /// Sends a JSON POST request and returns the decoded response.
   Future<dynamic> postJson(
     String path,
     Map<String, dynamic> body, {
@@ -67,7 +67,7 @@ class ApiClient {
     );
   }
 
-  /// JSON PUT ??? ??? ???? ??? ????.
+  /// Sends a JSON PUT request and returns the decoded response.
   Future<dynamic> putJson(
     String path,
     Map<String, dynamic> body, {
@@ -82,12 +82,12 @@ class ApiClient {
     );
   }
 
-  /// form-urlencoded POST ??? ???.
+  /// Sends a form-urlencoded POST request.
   Future<dynamic> postForm(String path, Map<String, String> body) async {
     return _send(() async => http.post(ApiConfig.uri(path), body: body));
   }
 
-  /// ?? timeout, ?? ??, ?? ?? ??? ????.
+  /// Applies common timeout, connection, and server error handling.
   Future<dynamic> _send(Future<http.Response> Function() request) async {
     try {
       final response = await request().timeout(_timeout);
@@ -109,7 +109,7 @@ class ApiClient {
     }
   }
 
-  /// ?? ???? ??? JWT? Authorization ??? ???.
+  /// Adds the stored JWT token to Authorization for protected requests.
   Future<Map<String, String>> _headers({required bool authorized}) async {
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (authorized) {
@@ -125,7 +125,7 @@ class ApiClient {
     return headers;
   }
 
-  /// HTTP ?? ?? ??? ???? JSON ?? ???? ????.
+  /// Checks HTTP success and decodes JSON or plain text responses.
   dynamic _decode(http.Response response) {
     if (response.statusCode == 204 || response.bodyBytes.isEmpty) {
       return null;
@@ -148,7 +148,7 @@ class ApiClient {
     }
   }
 
-  /// HTTP ?? ??? ???? ? ? ?? ?? ???? ????.
+  /// Converts HTTP status codes into UI-facing error categories.
   ApiExceptionKind _kindForStatus(int statusCode) {
     if (statusCode == 401 || statusCode == 403) {
       return ApiExceptionKind.loginRequired;

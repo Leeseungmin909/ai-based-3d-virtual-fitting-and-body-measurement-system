@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'features/auth/screens/login_page.dart';
 
-/// ? ?? ??? ??? ???? ????.
+/// Defines the shared app theme and initial route.
 class VirtualFittingApp extends StatelessWidget {
   const VirtualFittingApp({super.key});
 

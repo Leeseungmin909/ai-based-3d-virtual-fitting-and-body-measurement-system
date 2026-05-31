@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * ???? ?? ?? ??? ?? API? ????.
+ * Provides APIs for storing and reading user body measurements.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -30,7 +30,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * ???? ?????? ?? ??? ID? ???? ????.
+     * Reads measurements for a specific user ID, mainly for admin/test usage.
      */
     @GetMapping("/{userId}/measurements")
     public ResponseEntity<UserMeasurementResponse> getUserMeasurements(@PathVariable Long userId) {
@@ -38,7 +38,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * ?? ??? ID? ???? ????? ????.
+     * Creates or updates measurements for a specific user ID.
      */
     @PutMapping("/{userId}/measurements")
     public ResponseEntity<UserMeasurementResponse> upsertUserMeasurements(
@@ -48,7 +48,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * JWT ?? ?? ???? ???? ????.
+     * Reads measurements for the currently authenticated user.
      */
     @GetMapping("/me/measurements")
     public ResponseEntity<UserMeasurementResponse> getMyMeasurements(Authentication authentication) {
@@ -57,7 +57,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * JWT ?? ?? ???? ???? ????? ????.
+     * Creates or updates measurements for the currently authenticated user.
      */
     @PutMapping("/me/measurements")
     public ResponseEntity<UserMeasurementResponse> upsertMyMeasurements(
@@ -68,7 +68,7 @@ public class UserMeasurementController {
     }
 
     /**
-     * Spring Security ?? ???? ?? ???? ????.
+     * Looks up the current user from Spring Security authentication.
      */
     private User getAuthenticatedUser(Authentication authentication) {
         return userRepository.findByEmail(authentication.getName())

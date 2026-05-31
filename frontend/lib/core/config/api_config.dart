@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Spring ?? baseUrl? ???? API ?? URI? ????.
+/// Stores the Spring server baseUrl and builds API request URIs.
 class ApiConfig {
   const ApiConfig._();
 

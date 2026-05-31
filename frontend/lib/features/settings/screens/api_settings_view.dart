@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/config/api_config.dart';
 
-/// ??/?? ??? ?? Spring API ?? ??? ??? ????.
+/// Lets the user change the Spring API server URL for local demos.
 class ApiSettingsView extends StatefulWidget {
   const ApiSettingsView({super.key});
 

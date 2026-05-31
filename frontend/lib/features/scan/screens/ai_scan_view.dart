@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'mesh_view.dart';
 
-/// AI ?? ??? ?? ??/??? ??? ??? ?? ????.
+/// Temporary entry screen for video capture/upload before AI integration.
 class AiScanView extends StatefulWidget {
   const AiScanView({super.key});
 

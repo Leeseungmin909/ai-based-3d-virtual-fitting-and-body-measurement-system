@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Flutter mock login flow?? ??? ?? API? ????.
+ * Provides authentication APIs used by the Flutter mock login flow.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -22,7 +22,7 @@ public class AuthController {
     }
 
     /**
-     * ???? ???? ???? ????? ??? ? JWT? ????.
+     * Creates or loads a user from email/name and returns a JWT.
      */
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@RequestParam String email, @RequestParam String name) {

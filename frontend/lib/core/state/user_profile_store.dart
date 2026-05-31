@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// ???? ???? ??? ??? ???.
+/// User profile values shared across Flutter screens.
 class UserProfile {
   const UserProfile({this.heightCm, this.hasAvatar = false});
 
@@ -10,7 +10,7 @@ class UserProfile {
   bool get needsSetup => heightCm == null;
 }
 
-/// ??? ? ??? ??? ??? ???? ????.
+/// Keeps user profile values in memory after login/sign-up.
 class UserProfileStore {
   static const _heightKey = 'user_height_cm';
   static const _hasAvatarKey = 'user_has_avatar';

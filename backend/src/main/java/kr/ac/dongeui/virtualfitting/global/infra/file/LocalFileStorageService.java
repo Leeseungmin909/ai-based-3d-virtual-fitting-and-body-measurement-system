@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
- * ??? ??? ?? storage ????? ???? ?? URL ??? ???.
+ * Stores uploaded files under the local storage directory and returns public URLs.
  */
 @Service
 public class LocalFileStorageService {
@@ -27,7 +27,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * ???? ???? ??? ? UUID? ?? ?? ?? ????.
+     * Sanitizes folder and file names, then stores the file with a UUID prefix.
      */
     public String uploadFile(MultipartFile file, String folder) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -51,7 +51,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * ?? ???? ???? ???? ??? ?? ?? ?? ??? ????.
+     * Sanitizes folder path input to prevent parent directory traversal.
      */
     private String sanitizePathPart(String value) {
         String sanitized = value.replace('\\', '/').replaceAll("[^a-zA-Z0-9/_-]", "_");
@@ -63,7 +63,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * ?? ????? ??? ???? ?? ??? ????.
+     * Removes unsafe characters from the original filename.
      */
     private String sanitizeFilename(String filename) {
         String value = filename == null || filename.isBlank() ? "file" : filename;
@@ -72,7 +72,7 @@ public class LocalFileStorageService {
     }
 
     /**
-     * ?? ?? ?? ??? ?? ???? ????? ?????.
+     * Normalizes the static public path to always start with a slash.
      */
     private String normalizePublicPath(String value) {
         String normalized = value == null || value.isBlank() ? "/storage" : value.trim();

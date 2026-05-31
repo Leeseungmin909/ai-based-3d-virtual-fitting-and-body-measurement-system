@@ -5,7 +5,7 @@ import '../../home/screens/home_view.dart';
 import '../../settings/screens/api_settings_view.dart';
 import '../services/auth_service.dart';
 
-/// ???? mock ??? ??? ???? ????.
+/// Screen where users start the mock login flow.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 

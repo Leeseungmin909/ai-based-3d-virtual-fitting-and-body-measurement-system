@@ -16,7 +16,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * JWT ??, CORS, ?? API ??? ???? Spring Security ????.
+ * Configures JWT authentication, CORS, and public API paths.
  */
 @Configuration
 @EnableWebSecurity
@@ -29,7 +29,7 @@ public class SecurityConfig {
     }
 
     /**
-     * ??? ??? API? ?? API? ???? JWT ??? ????.
+     * Separates public APIs from protected APIs and registers the JWT filter.
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -54,7 +54,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Flutter ?? ??? ?? ??? ??????? ??? ? ??? CORS? ????.
+     * Allows Flutter development clients and local test clients through CORS.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

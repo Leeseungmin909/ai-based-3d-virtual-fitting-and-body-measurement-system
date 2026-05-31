@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../home/screens/home_view.dart';
 
-/// ??? ?? ???? ?? ??? ??? ???? ????.
+/// Screen that collects name and height before entering the app.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 

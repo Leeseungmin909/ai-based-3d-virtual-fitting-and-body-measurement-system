@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ??? ?? ?? ??, ??, ?? ?? ??? ????.
+ * Handles fitting history creation, lookup, and completion state updates.
  */
 @Service
 public class FittingService {
@@ -33,7 +33,7 @@ public class FittingService {
     }
 
     /**
-     * ??? ?? ???? ?? ?? ???? ?? ??? ????? ????.
+     * Finds the user by email and returns fitting histories in newest-first order.
      */
     @Transactional(readOnly = true)
     public List<FittingHistoryResponse> getMyFittingHistory(String email) {
@@ -44,7 +44,7 @@ public class FittingService {
     }
 
     /**
-     * ?? ??? ????? ??? ? PENDING ?? ??? ????.
+     * Validates the selected clothes and creates a PENDING fitting history.
      */
     @Transactional
     public FittingHistory requestFitting(String email, Long clothesId) {
@@ -66,7 +66,7 @@ public class FittingService {
     }
 
     /**
-     * AI ?? ?? ??? ?? ?? URL? SUCCESS ??? ????.
+     * Stores the AI completion callback result URL and SUCCESS status.
      */
     @Transactional
     public void completeFitting(Long fittingId, String resultUrl) {
@@ -76,7 +76,7 @@ public class FittingService {
     }
 
     /**
-     * ?? ???? ???? ???? ????.
+     * Finds a user by authenticated email.
      */
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)

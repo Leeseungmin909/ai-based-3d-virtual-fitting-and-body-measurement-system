@@ -4,7 +4,7 @@ import '../../../core/errors/ui_error_messages.dart';
 import '../models/fitting_history_item.dart';
 import '../services/fitting_service.dart';
 
-/// ???? ?? ?? ??? ???? ??? ????.
+/// Shows fitting histories fetched from the Spring API.
 class FittingHistoryView extends StatefulWidget {
   const FittingHistoryView({super.key});
 
@@ -91,7 +91,7 @@ class _FittingHistoryViewState extends State<FittingHistoryView> {
   }
 }
 
-/// ?? ?? ??? ? ??? ?? ??? ????.
+/// Shows empty or error states for the fitting history screen.
 class _HistoryMessage extends StatelessWidget {
   const _HistoryMessage({
     required this.icon,

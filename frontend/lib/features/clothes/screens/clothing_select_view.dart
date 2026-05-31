@@ -6,7 +6,7 @@ import '../../fitting/screens/fitting_view.dart';
 import '../models/clothes.dart';
 import '../services/clothes_service.dart';
 
-/// ???? ?? ?? ??? ???? ?? ?? ???? ???.
+/// Shows clothes loaded from the server and opens the fitting request screen.
 class ClothingSelectView extends StatefulWidget {
   const ClothingSelectView({super.key});
 
@@ -128,7 +128,7 @@ class _ClothingSelectViewState extends State<ClothingSelectView> {
   }
 }
 
-/// ? ?? ?? ??? ?? ??? ????.
+/// Renders one clothes item as a selectable card.
 class _ClothesTile extends StatelessWidget {
   const _ClothesTile({required this.clothes});
 
@@ -185,7 +185,7 @@ class _ClothesTile extends StatelessWidget {
   }
 }
 
-/// ?? ??? ? ?? ??? ? ?? ????? ????.
+/// Shows loading, empty, or error states in the clothes screen.
 class _MessageState extends StatelessWidget {
   const _MessageState({
     required this.icon,

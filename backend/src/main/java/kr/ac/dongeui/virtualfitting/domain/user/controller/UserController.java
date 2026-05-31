@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * ???? ???? ?? ?? ??? ???? API? ????.
+ * Provides APIs for updating the current user basic body information.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -25,7 +25,7 @@ public class UserController {
     }
 
     /**
-     * ?? ???? ???? ? ??? ???? ?? ????? ?????.
+     * Stores the current user height and synchronizes it with measurements.
      */
     @PutMapping("/me/body-info")
     public ResponseEntity<UserBodyInfoResponse> updateMyBodyInfo(

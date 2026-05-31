@@ -1,4 +1,4 @@
-/// Spring clothes ??? ???? ?? ?? ???? ????.
+/// Model used by the UI after parsing the Spring clothes response.
 class Clothes {
   const Clothes({
     required this.id,

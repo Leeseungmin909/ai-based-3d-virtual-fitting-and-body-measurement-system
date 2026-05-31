@@ -5,7 +5,7 @@ import '../../../core/state/user_profile_store.dart';
 import '../../home/screens/home_view.dart';
 import '../services/user_service.dart';
 
-/// ??? ?? ???? Spring API? ???? ????.
+/// Screen that edits height and saves it through the Spring API.
 class ProfileEditView extends StatefulWidget {
   const ProfileEditView({super.key});
 

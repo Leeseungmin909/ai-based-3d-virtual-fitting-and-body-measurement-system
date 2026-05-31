@@ -1,6 +1,6 @@
 import '../../../core/services/api_client.dart';
 
-/// ??? ? ???? Spring ??? API? ????.
+/// Saves the user height through the Spring user API.
 class UserService {
   UserService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 

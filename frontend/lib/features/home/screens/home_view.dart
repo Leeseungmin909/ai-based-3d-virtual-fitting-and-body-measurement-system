@@ -10,7 +10,7 @@ import '../../profile/screens/profile_view.dart';
 import '../../scan/screens/photo_upload_view.dart';
 import '../../settings/screens/api_settings_view.dart';
 
-/// ?? ?? ???? ???? ? ?? ????.
+/// Home menu screen that routes users to the main features.
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * ?? ?? ??? ???? ?? ?? API? ????.
+ * Provides clothes list lookup and test-time clothes registration APIs.
  */
 @RestController
 @RequestMapping("/api/clothes")
@@ -32,7 +32,7 @@ public class ClothesController {
     }
 
     /**
-     * Flutter ?? ?? ??? ??? ?? ?? ??? ????.
+     * Returns all clothes for the Flutter clothes selection screen.
      */
     @GetMapping
     public List<ClothesResponse> getAllClothes() {
@@ -42,7 +42,7 @@ public class ClothesController {
     }
 
     /**
-     * ?? ???? ?? ??? ????? ?? ??? ????.
+     * Stores clothes metadata for local testing or seed data entry.
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createClothes(@RequestBody ClothesCreateRequest request) {

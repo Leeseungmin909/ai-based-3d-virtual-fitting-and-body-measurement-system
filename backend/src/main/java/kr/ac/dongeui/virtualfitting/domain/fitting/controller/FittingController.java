@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * ?? ?? ??, ?? ??, AI ?? ??? ????.
+ * Handles fitting request creation, history lookup, and AI completion callbacks.
  */
 @RestController
 @RequestMapping("/api/fitting")
@@ -30,7 +30,7 @@ public class FittingController {
     }
 
     /**
-     * ?? ???? ???? ?? ?? ??? ????? ????.
+     * Returns current user fitting histories in newest-first order.
      */
     @GetMapping("/history")
     public ResponseEntity<List<FittingHistoryResponse>> getMyFittingHistory(Authentication authentication) {
@@ -38,7 +38,7 @@ public class FittingController {
     }
 
     /**
-     * ??? ??? ?? ?? ??? PENDING ??? ????.
+     * Creates a PENDING fitting request for the selected clothes.
      */
     @PostMapping("/history")
     public ResponseEntity<FittingCreateResponse> requestVirtualFitting(
@@ -49,7 +49,7 @@ public class FittingController {
     }
 
     /**
-     * AI ?????? ???? ? ?? URL? ??? ????.
+     * Stores the result URL when the AI pipeline reports completion.
      */
     @PostMapping("/webhook/complete")
     public ResponseEntity<Map<String, String>> completeVirtualFitting(@RequestBody Map<String, Object> requestData) {
