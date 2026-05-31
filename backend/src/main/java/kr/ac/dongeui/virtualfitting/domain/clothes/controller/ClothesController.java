@@ -5,13 +5,20 @@ import kr.ac.dongeui.virtualfitting.domain.clothes.dto.ClothesResponse;
 import kr.ac.dongeui.virtualfitting.domain.clothes.repository.ClothesRepository;
 import kr.ac.dongeui.virtualfitting.domain.clothes.service.ClothesService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * ?? ?? ??? ???? ?? ?? API? ????.
+ */
 @RestController
 @RequestMapping("/api/clothes")
 public class ClothesController {
@@ -24,7 +31,9 @@ public class ClothesController {
         this.clothesService = clothesService;
     }
 
-    // 의류 목록 조회 API
+    /**
+     * Flutter ?? ?? ??? ??? ?? ?? ??? ????.
+     */
     @GetMapping
     public List<ClothesResponse> getAllClothes() {
         return clothesRepository.findAll().stream()
@@ -32,13 +41,15 @@ public class ClothesController {
                 .collect(Collectors.toList());
     }
 
-    // 신규 의류 등록 API
+    /**
+     * ?? ???? ?? ??? ????? ?? ??? ????.
+     */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createClothes(@RequestBody ClothesCreateRequest request) {
         Long clothesId = clothesService.createClothes(request);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "옷 데이터가 성공적으로 등록되었습니다.");
+        response.put("message", "Clothes created successfully.");
         response.put("clothesId", clothesId);
 
         return ResponseEntity.ok(response);

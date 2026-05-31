@@ -7,24 +7,25 @@ import java.time.format.DateTimeFormatter;
 
 @Getter
 public class FittingHistoryResponse {
-    private Long id;
-    private String clothesName;
-    private String fittingDate;
-    private String status;
-    private String resultUrl;
+    private final Long id;
+    private final Long clothesId;
+    private final String clothesName;
+    private final String fittingDate;
+    private final String createdAt;
+    private final String status;
+    private final String resultSplatUrl;
 
     public FittingHistoryResponse(FittingHistory history) {
         this.id = history.getId();
+        this.clothesId = history.getClothes().getId();
         this.clothesName = history.getClothes().getName();
-
-        this.fittingDate = history.getCreatedAt() != null ?
-                history.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "오늘";
-
-        String rawStatus = history.getStatus() != null ? history.getStatus().name() : "PENDING";
-        if (rawStatus.equals("PENDING")) this.status = "피팅 진행중..";
-        else if (rawStatus.equals("COMPLETED")) this.status = "피팅 완료";
-        else this.status = "에러 발생";
-
-        this.resultUrl = history.getResultSplatUrl();
+        this.fittingDate = history.getCreatedAt() != null
+                ? history.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                : null;
+        this.createdAt = history.getCreatedAt() != null
+                ? history.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                : null;
+        this.status = history.getStatus() != null ? history.getStatus().name() : "PENDING";
+        this.resultSplatUrl = history.getResultSplatUrl();
     }
 }

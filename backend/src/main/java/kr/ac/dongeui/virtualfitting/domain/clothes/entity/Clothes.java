@@ -25,7 +25,7 @@ public class Clothes {
     private String name;
 
     @Column(nullable = false, length = 50)
-    private String category; // 예: "TOP", "BOTTOM", "OUTER"
+    private String category;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String imageUrl;
@@ -33,19 +33,30 @@ public class Clothes {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String base3dUrl;
 
-    // --- 사이즈 정보 (NULL 허용: 카테고리에 따라 안 쓰는 값이 있음) ---
-    // 공통
-    private Double totalLength;   // 총장
+    @Column(name = "total_length_cm")
+    private Double totalLengthCm;
 
-    // 상의 & 아우터 전용
-    private Double shoulderWidth; // 어깨너비
-    private Double chestWidth;    // 가슴단면
-    private Double sleeveLength;  // 소매길이
+    @Column(name = "shoulder_width_cm")
+    private Double shoulderWidthCm;
 
-    // 하의 전용
-    private Double waistWidth;    // 허리단면
-    private Double hipWidth;      // 엉덩이단면
-    private Double thighWidth;    // 허벅지단면
-    private Double crotch;        // 밑위
-    private Double hemWidth;      // 밑단단면
+    @Column(name = "chest_width_cm")
+    private Double chestWidthCm;
+
+    @Column(name = "sleeve_length_cm")
+    private Double sleeveLengthCm;
+
+    @Column(name = "waist_width_cm")
+    private Double waistWidthCm;
+
+    @Column(name = "hip_width_cm")
+    private Double hipWidthCm;
+
+    @Column(name = "thigh_width_cm")
+    private Double thighWidthCm;
+
+    @Column(name = "crotch_cm")
+    private Double crotchCm;
+
+    @Column(name = "hem_width_cm")
+    private Double hemWidthCm;
 }

@@ -1,5 +1,6 @@
 package kr.ac.dongeui.virtualfitting.domain.clothes.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Getter;
 
 @Getter
@@ -9,14 +10,30 @@ public class ClothesCreateRequest {
     private String imageUrl;
     private String base3dUrl;
 
-    private Double totalLength;
-    private Double shoulderWidth;
-    private Double chestWidth;
-    private Double sleeveLength;
+    @JsonAlias("totalLength")
+    private Double totalLengthCm;
 
-    private Double waistWidth;
-    private Double hipWidth;
-    private Double thighWidth;
-    private Double crotch;
-    private Double hemWidth;
+    @JsonAlias("shoulderWidth")
+    private Double shoulderWidthCm;
+
+    @JsonAlias("chestWidth")
+    private Double chestWidthCm;
+
+    @JsonAlias("sleeveLength")
+    private Double sleeveLengthCm;
+
+    @JsonAlias("waistWidth")
+    private Double waistWidthCm;
+
+    @JsonAlias("hipWidth")
+    private Double hipWidthCm;
+
+    @JsonAlias("thighWidth")
+    private Double thighWidthCm;
+
+    @JsonAlias("crotch")
+    private Double crotchCm;
+
+    @JsonAlias("hemWidth")
+    private Double hemWidthCm;
 }

@@ -1,9 +1,25 @@
 package kr.ac.dongeui.virtualfitting.domain.fitting.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import kr.ac.dongeui.virtualfitting.domain.clothes.entity.Clothes;
 import kr.ac.dongeui.virtualfitting.domain.user.entity.User;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -13,10 +29,10 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "fitting_histories")
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class) // 날짜 자동 생성을 위한 리스너 추가
+@Table(name = "fitting_histories")
+@EntityListeners(AuditingEntityListener.class)
 public class FittingHistory {
 
     @Id
@@ -31,17 +47,23 @@ public class FittingHistory {
     @JoinColumn(name = "clothes_id", nullable = false)
     private Clothes clothes;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "result_splat_url", columnDefinition = "TEXT")
     private String resultSplatUrl;
 
-    // 피팅 상태
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private FittingStatus status;
 
     @CreatedDate
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = FittingStatus.PENDING;
+        }
+    }
 
     public void updateStatus(FittingStatus status, String resultSplatUrl) {
         this.status = status;
