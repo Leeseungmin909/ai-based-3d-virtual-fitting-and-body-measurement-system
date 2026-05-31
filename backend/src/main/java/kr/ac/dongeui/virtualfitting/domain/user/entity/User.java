@@ -21,18 +21,12 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(nullable = false, length = 50)
     private String name;
 
+    @Column(name = "height_cm")
     private Double heightCm;
-
-    //@Column(nullable = false, columnDefinition = "TEXT")
-    @Column(columnDefinition = "TEXT")
-    private String bodyImageUrl;
-
-    @Column(columnDefinition = "TEXT")
-    private String smplMannequinUrl;
 }

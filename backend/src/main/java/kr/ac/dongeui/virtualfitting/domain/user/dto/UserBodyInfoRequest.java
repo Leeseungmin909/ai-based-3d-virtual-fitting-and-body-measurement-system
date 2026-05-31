@@ -5,5 +5,4 @@ import lombok.Getter;
 @Getter
 public class UserBodyInfoRequest {
     private Double heightCm;
-    private String bodyImageUrl;
 }

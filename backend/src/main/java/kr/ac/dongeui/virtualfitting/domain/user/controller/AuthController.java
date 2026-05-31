@@ -1,5 +1,6 @@
 package kr.ac.dongeui.virtualfitting.domain.user.controller;
 
+import kr.ac.dongeui.virtualfitting.domain.user.dto.AuthResponse;
 import kr.ac.dongeui.virtualfitting.domain.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -7,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-
+/**
+ * Flutter mock login flow?? ??? ?? API? ????.
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -20,11 +21,12 @@ public class AuthController {
         this.userService = userService;
     }
 
+    /**
+     * ???? ???? ???? ????? ??? ? JWT? ????.
+     */
     @PostMapping("/google")
-    public ResponseEntity<Map<String, String>> googleLogin(@RequestParam String email, @RequestParam String name) {
-        String token = userService.googleLoginOrSignup(email, name);
-        Map<String, String> response = new HashMap<>();
-        response.put("token", token);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AuthResponse> googleLogin(@RequestParam String email, @RequestParam String name) {
+        UserService.LoginResult result = userService.googleLoginOrSignup(email, name);
+        return ResponseEntity.ok(new AuthResponse(result.token(), result.user()));
     }
 }
