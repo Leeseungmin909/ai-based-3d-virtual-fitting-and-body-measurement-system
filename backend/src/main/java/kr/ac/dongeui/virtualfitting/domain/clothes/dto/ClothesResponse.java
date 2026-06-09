@@ -21,11 +21,15 @@ public class ClothesResponse {
     private final Double hemWidthCm;
 
     public ClothesResponse(Clothes clothes) {
+        this(clothes, "");
+    }
+
+    public ClothesResponse(Clothes clothes, String assetBaseUrl) {
         this.id = clothes.getId();
         this.name = clothes.getName();
         this.category = clothes.getCategory();
-        this.imageUrl = clothes.getImageUrl();
-        this.base3dUrl = clothes.getBase3dUrl();
+        this.imageUrl = resolveAssetUrl(assetBaseUrl, clothes.getImageUrl());
+        this.base3dUrl = resolveAssetUrl(assetBaseUrl, clothes.getBase3dUrl());
         this.totalLengthCm = clothes.getTotalLengthCm();
         this.shoulderWidthCm = clothes.getShoulderWidthCm();
         this.chestWidthCm = clothes.getChestWidthCm();
@@ -35,5 +39,15 @@ public class ClothesResponse {
         this.thighWidthCm = clothes.getThighWidthCm();
         this.crotchCm = clothes.getCrotchCm();
         this.hemWidthCm = clothes.getHemWidthCm();
+    }
+
+    private static String resolveAssetUrl(String assetBaseUrl, String path) {
+        if (path == null || path.isBlank() || path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+        }
+
+        String base = assetBaseUrl == null ? "" : assetBaseUrl.replaceAll("/+$", "");
+        String normalizedPath = path.startsWith("/") ? path : "/" + path;
+        return base + normalizedPath;
     }
 }

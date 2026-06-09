@@ -53,8 +53,8 @@ public class UserMeasurement {
     @Column(name = "crotch_cm")
     private Double crotchCm;
 
-    @Column(name = "source_video_url", columnDefinition = "TEXT")
-    private String sourceVideoUrl;
+    @Column(name = "source_image_url", columnDefinition = "TEXT")
+    private String sourceImageUrl;
 
     @Column(name = "smpl_mesh_url", columnDefinition = "TEXT")
     private String smplMeshUrl;

@@ -3,6 +3,7 @@ package kr.ac.dongeui.virtualfitting.domain.fitting.service;
 import kr.ac.dongeui.virtualfitting.domain.clothes.entity.Clothes;
 import kr.ac.dongeui.virtualfitting.domain.clothes.repository.ClothesRepository;
 import kr.ac.dongeui.virtualfitting.domain.fitting.dto.FittingHistoryResponse;
+import kr.ac.dongeui.virtualfitting.domain.fitting.dto.FittingResultResponse;
 import kr.ac.dongeui.virtualfitting.domain.fitting.entity.FittingHistory;
 import kr.ac.dongeui.virtualfitting.domain.fitting.entity.FittingStatus;
 import kr.ac.dongeui.virtualfitting.domain.fitting.repository.FittingHistoryRepository;
@@ -10,12 +11,14 @@ import kr.ac.dongeui.virtualfitting.domain.user.entity.User;
 import kr.ac.dongeui.virtualfitting.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 피팅 기록 생성, 조회, 완료 상태 갱신을 처리한다.
+ * 피팅 기록 생성, 조회, 완료 상태 갱신을 처리합니다.
  */
 @Service
 public class FittingService {
@@ -23,17 +26,20 @@ public class FittingService {
     private final FittingHistoryRepository fittingHistoryRepository;
     private final UserRepository userRepository;
     private final ClothesRepository clothesRepository;
+    private final AiCommunicationService aiCommunicationService;
 
     public FittingService(FittingHistoryRepository fittingHistoryRepository,
                           UserRepository userRepository,
-                          ClothesRepository clothesRepository) {
+                          ClothesRepository clothesRepository,
+                          AiCommunicationService aiCommunicationService) {
         this.fittingHistoryRepository = fittingHistoryRepository;
         this.userRepository = userRepository;
         this.clothesRepository = clothesRepository;
+        this.aiCommunicationService = aiCommunicationService;
     }
 
     /**
-     * 이메일로 사용자를 찾고 최신순 피팅 기록을 반환한다.
+     * 이메일로 사용자를 찾고 최신 피팅 기록을 반환합니다.
      */
     @Transactional(readOnly = true)
     public List<FittingHistoryResponse> getMyFittingHistory(String email) {
@@ -44,7 +50,25 @@ public class FittingService {
     }
 
     /**
-     * 선택한 옷을 검증하고 PENDING 상태의 피팅 기록을 생성한다.
+     * 특정 피팅 기록이 현재 로그인한 사용자의 것인지 확인한 뒤 상태를 반환합니다.
+     */
+    @Transactional(readOnly = true)
+    public FittingHistoryResponse getMyFittingHistoryDetail(String email, Long fittingId) {
+        FittingHistory history = getOwnedFittingHistory(email, fittingId);
+        return new FittingHistoryResponse(history);
+    }
+
+    /**
+     * 특정 피팅 기록의 결과 화면용 URL과 완료 여부를 반환합니다.
+     */
+    @Transactional(readOnly = true)
+    public FittingResultResponse getMyFittingResult(String email, Long fittingId) {
+        FittingHistory history = getOwnedFittingHistory(email, fittingId);
+        return new FittingResultResponse(history);
+    }
+
+    /**
+     * 선택 옷을 검증하고 PENDING 상태의 피팅 기록을 만든 뒤 AI 작업을 예약합니다.
      */
     @Transactional
     public FittingHistory requestFitting(String email, Long clothesId) {
@@ -62,21 +86,53 @@ public class FittingService {
                 .status(FittingStatus.PENDING)
                 .build();
 
-        return fittingHistoryRepository.save(history);
+        FittingHistory savedHistory = fittingHistoryRepository.save(history);
+        startAiJobAfterCommit(savedHistory.getId());
+        return savedHistory;
     }
 
     /**
-     * AI 완료 콜백의 결과 URL과 SUCCESS 상태를 저장한다.
+     * AI 완료 콜백을 받으면 작업 ID와 결과 파일 URL을 저장합니다.
      */
     @Transactional
-    public void completeFitting(Long fittingId, String resultUrl) {
+    public void completeFitting(Long fittingId, String aiJobId, String avatarGlbUrl, String renderImageUrl, String resultJsonUrl) {
         FittingHistory history = fittingHistoryRepository.findById(fittingId)
                 .orElseThrow(() -> new IllegalArgumentException("Fitting history not found."));
-        history.updateStatus(FittingStatus.SUCCESS, resultUrl);
+        history.updateResult(FittingStatus.SUCCESS, aiJobId, avatarGlbUrl, renderImageUrl, resultJsonUrl);
     }
 
     /**
-     * 인증된 이메일로 사용자를 조회한다.
+     * 피팅 기록 저장 트랜잭션이 끝난 뒤 비동기 AI 호출을 시작합니다.
+     */
+    private void startAiJobAfterCommit(Long fittingId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            aiCommunicationService.startAiFitting(fittingId);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                aiCommunicationService.startAiFitting(fittingId);
+            }
+        });
+    }
+
+    /**
+     * 피팅 ID와 사용자 이메일을 함께 검사해 다른 사용자의 결과 접근을 차단합니다.
+     */
+    private FittingHistory getOwnedFittingHistory(String email, Long fittingId) {
+        if (fittingId == null) {
+            throw new IllegalArgumentException("fittingId is required.");
+        }
+
+        User user = getUserByEmail(email);
+        return fittingHistoryRepository.findByIdAndUser(fittingId, user)
+                .orElseThrow(() -> new IllegalArgumentException("Fitting history not found."));
+    }
+
+    /**
+     * 인증 이메일로 사용자 엔티티를 조회합니다.
      */
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)

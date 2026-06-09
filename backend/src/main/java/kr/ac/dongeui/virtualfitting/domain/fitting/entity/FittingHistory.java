@@ -47,8 +47,17 @@ public class FittingHistory {
     @JoinColumn(name = "clothes_id", nullable = false)
     private Clothes clothes;
 
-    @Column(name = "result_splat_url", columnDefinition = "TEXT")
-    private String resultSplatUrl;
+    @Column(name = "ai_job_id", length = 100)
+    private String aiJobId;
+
+    @Column(name = "avatar_glb_url", columnDefinition = "TEXT")
+    private String avatarGlbUrl;
+
+    @Column(name = "render_image_url", columnDefinition = "TEXT")
+    private String renderImageUrl;
+
+    @Column(name = "result_json_url", columnDefinition = "TEXT")
+    private String resultJsonUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -65,8 +74,11 @@ public class FittingHistory {
         }
     }
 
-    public void updateStatus(FittingStatus status, String resultSplatUrl) {
+    public void updateResult(FittingStatus status, String aiJobId, String avatarGlbUrl, String renderImageUrl, String resultJsonUrl) {
         this.status = status;
-        this.resultSplatUrl = resultSplatUrl;
+        this.aiJobId = aiJobId;
+        this.avatarGlbUrl = avatarGlbUrl;
+        this.renderImageUrl = renderImageUrl;
+        this.resultJsonUrl = resultJsonUrl;
     }
 }

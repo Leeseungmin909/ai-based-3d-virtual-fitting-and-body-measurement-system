@@ -1,0 +1,23 @@
+{
+  "job_id": "sample-ai-job-001",
+  "status": "done",
+  "measurements_cm": {
+    "height_cm": 178.0,
+    "shoulder_width_cm": 47.2,
+    "chest_width_cm": 52.0,
+    "sleeve_length_cm": 58.3,
+    "waist_width_cm": 41.0,
+    "hip_width_cm": 50.5,
+    "thigh_width_cm": 28.4,
+    "crotch_cm": 73.2
+  },
+  "smpl_mesh_url": "/outputs/debug/sample-ai-job-001/smplx.ply",
+  "avatar_glb_url": "/outputs/sample-ai-job-001/avatar.glb",
+  "shirt_glb_url": "/outputs/sample-ai-job-001/shirt_fitted.glb",
+  "pants_glb_url": "/outputs/sample-ai-job-001/pants_fitted.glb",
+  "render_urls": [
+    "/outputs/sample-ai-job-001/render_front.png",
+    "/outputs/sample-ai-job-001/render_side.png"
+  ],
+  "result_json_url": "/outputs/sample-ai-job-001_result.json"
+}

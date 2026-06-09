@@ -13,7 +13,10 @@ public class FittingHistoryResponse {
     private final String fittingDate;
     private final String createdAt;
     private final String status;
-    private final String resultSplatUrl;
+    private final String aiJobId;
+    private final String avatarGlbUrl;
+    private final String renderImageUrl;
+    private final String resultJsonUrl;
 
     public FittingHistoryResponse(FittingHistory history) {
         this.id = history.getId();
@@ -26,6 +29,9 @@ public class FittingHistoryResponse {
                 ? history.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 : null;
         this.status = history.getStatus() != null ? history.getStatus().name() : "PENDING";
-        this.resultSplatUrl = history.getResultSplatUrl();
+        this.aiJobId = history.getAiJobId();
+        this.avatarGlbUrl = history.getAvatarGlbUrl();
+        this.renderImageUrl = history.getRenderImageUrl();
+        this.resultJsonUrl = history.getResultJsonUrl();
     }
 }

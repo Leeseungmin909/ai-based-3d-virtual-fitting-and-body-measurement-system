@@ -4,6 +4,7 @@ import kr.ac.dongeui.virtualfitting.domain.clothes.dto.ClothesCreateRequest;
 import kr.ac.dongeui.virtualfitting.domain.clothes.dto.ClothesResponse;
 import kr.ac.dongeui.virtualfitting.domain.clothes.repository.ClothesRepository;
 import kr.ac.dongeui.virtualfitting.domain.clothes.service.ClothesService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,10 +26,17 @@ public class ClothesController {
 
     private final ClothesRepository clothesRepository;
     private final ClothesService clothesService;
+    private final String clothesAssetBaseUrl;
 
-    public ClothesController(ClothesRepository clothesRepository, ClothesService clothesService) {
+    public ClothesController(
+            ClothesRepository clothesRepository,
+            ClothesService clothesService,
+            @Value("${ai.service.public-base-url:${ai.service.base-url:http://localhost:8000}}")
+            String clothesAssetBaseUrl
+    ) {
         this.clothesRepository = clothesRepository;
         this.clothesService = clothesService;
+        this.clothesAssetBaseUrl = clothesAssetBaseUrl;
     }
 
     /**
@@ -37,7 +45,7 @@ public class ClothesController {
     @GetMapping
     public List<ClothesResponse> getAllClothes() {
         return clothesRepository.findAll().stream()
-                .map(ClothesResponse::new)
+                .map(clothes -> new ClothesResponse(clothes, clothesAssetBaseUrl))
                 .collect(Collectors.toList());
     }
 

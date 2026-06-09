@@ -30,7 +30,7 @@ public class Clothes {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "base3d_url", nullable = false, columnDefinition = "TEXT")
     private String base3dUrl;
 
     @Column(name = "total_length_cm")

@@ -1,0 +1,51 @@
+Table users {
+  id bigint [pk, increment]
+  email varchar(255) [not null, unique]
+  name varchar(50) [not null]
+  height_cm double
+}
+
+Table user_measurements {
+  id bigint [pk, increment]
+  user_id bigint [not null, unique, ref: > users.id]
+  height_cm double [not null]
+  shoulder_width_cm double
+  chest_width_cm double
+  sleeve_length_cm double
+  waist_width_cm double
+  hip_width_cm double
+  thigh_width_cm double
+  crotch_cm double
+  source_image_url text
+  smpl_mesh_url text
+  result_json_url text
+}
+
+Table clothes {
+  id bigint [pk, increment]
+  name varchar(100) [not null]
+  category varchar(50) [not null]
+  image_url text [not null]
+  base3d_url text [not null]
+  total_length_cm double
+  shoulder_width_cm double
+  chest_width_cm double
+  sleeve_length_cm double
+  waist_width_cm double
+  hip_width_cm double
+  thigh_width_cm double
+  crotch_cm double
+  hem_width_cm double
+}
+
+Table fitting_histories {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  clothes_id bigint [not null, ref: > clothes.id]
+  ai_job_id varchar(100)
+  avatar_glb_url text
+  render_image_url text
+  result_json_url text
+  status varchar(50) [not null]
+  created_at datetime
+}

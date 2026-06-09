@@ -15,7 +15,7 @@ public class UserMeasurementResponse {
     private final Double hipWidthCm;
     private final Double thighWidthCm;
     private final Double crotchCm;
-    private final String sourceVideoUrl;
+    private final String sourceImageUrl;
     private final String smplMeshUrl;
     private final String resultJsonUrl;
 
@@ -30,7 +30,7 @@ public class UserMeasurementResponse {
         this.hipWidthCm = measurement.getHipWidthCm();
         this.thighWidthCm = measurement.getThighWidthCm();
         this.crotchCm = measurement.getCrotchCm();
-        this.sourceVideoUrl = measurement.getSourceVideoUrl();
+        this.sourceImageUrl = measurement.getSourceImageUrl();
         this.smplMeshUrl = measurement.getSmplMeshUrl();
         this.resultJsonUrl = measurement.getResultJsonUrl();
     }

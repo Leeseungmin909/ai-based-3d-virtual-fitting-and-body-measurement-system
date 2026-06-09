@@ -12,7 +12,7 @@ public class UserMeasurementUpsertRequest {
     private Double hipWidthCm;
     private Double thighWidthCm;
     private Double crotchCm;
-    private String sourceVideoUrl;
+    private String sourceImageUrl;
     private String smplMeshUrl;
     private String resultJsonUrl;
 }
