@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+job_store.json
+*.log
+
+# SMPL-X model weights are large licensed assets.
+weights/smplx/smplx/*.npz
+weights/smplx/smplx/*.pkl
+weights/smplx/smplx/smplx_uv_2021.obj
+weights/smplx/smplx/smplx_uv_2021.png
+
+# 대용량 원본 옷 GLB 백업 (앱은 경량화된 model.glb만 사용, 원본은 로컬 보관)
+clothes/**/model_full.glb
+
+# 테스트 렌더 산출물
+test_render.png

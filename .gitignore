@@ -21,3 +21,13 @@ frontend/windows/flutter/ephemeral/
 # Local IDE settings
 frontend/.idea/
 frontend/.vscode/
+.idea/
+
+# Backend 런타임 데이터 (사용자 업로드 사진 등 - 공개 금지) 및 로그/빌드
+backend/storage/
+backend/*.log
+backend/build/
+backend/.gradle/
+
+# Claude 로컬 설정
+**/.claude/settings.local.json

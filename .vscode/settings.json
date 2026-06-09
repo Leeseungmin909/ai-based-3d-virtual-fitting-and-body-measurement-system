@@ -1,4 +1,6 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "cmake.sourceDirectory": "C:/Users/cldkd/Desktop/학교/4학년 1학기/7_캡스톤 디자인/AI-based 3D Virtual Fitting and Body Measurement System/frontend/linux",
+    "cmake.ignoreCMakeListsMissing": true
 }
