@@ -1,25 +1,45 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Flutter 화면 간에 공유되는 사용자 프로필 값이다.
 class UserProfile {
-  const UserProfile({this.heightCm, this.hasAvatar = false});
+  const UserProfile({
+    this.heightCm,
+    this.sourceImageUrl,
+    this.avatarGlbUrl,
+  });
 
   final double? heightCm;
-  final bool hasAvatar;
+  final String? sourceImageUrl;
+  final String? avatarGlbUrl;
 
-  bool get needsSetup => heightCm == null;
+  bool get hasHeight => heightCm != null;
+  bool get hasSourceImage => sourceImageUrl != null && sourceImageUrl!.isNotEmpty;
+  bool get hasAvatar => avatarGlbUrl != null && avatarGlbUrl!.isNotEmpty;
+
+  UserProfile copyWith({
+    double? heightCm,
+    String? sourceImageUrl,
+    String? avatarGlbUrl,
+  }) {
+    return UserProfile(
+      heightCm: heightCm ?? this.heightCm,
+      sourceImageUrl: sourceImageUrl ?? this.sourceImageUrl,
+      avatarGlbUrl: avatarGlbUrl ?? this.avatarGlbUrl,
+    );
+  }
 }
 
-/// 로그인 또는 회원가입 후 사용자 프로필 값을 메모리에 유지한다.
+/// Flutter 화면 간에 필요한 최소 사용자 정보를 로컬에 캐싱한다.
 class UserProfileStore {
-  static const _heightKey = 'user_height_cm';
-  static const _hasAvatarKey = 'user_has_avatar';
+  static const _heightKey = 'profile_height_cm';
+  static const _sourceImageUrlKey = 'profile_source_image_url';
+  static const _avatarGlbUrlKey = 'profile_avatar_glb_url';
 
   Future<UserProfile> load() async {
     final prefs = await SharedPreferences.getInstance();
     return UserProfile(
       heightCm: prefs.getDouble(_heightKey),
-      hasAvatar: prefs.getBool(_hasAvatarKey) ?? false,
+      sourceImageUrl: prefs.getString(_sourceImageUrlKey),
+      avatarGlbUrl: prefs.getString(_avatarGlbUrlKey),
     );
   }
 
@@ -28,8 +48,21 @@ class UserProfileStore {
     await prefs.setDouble(_heightKey, heightCm);
   }
 
-  Future<void> setAvatarReady(bool value) async {
+  Future<void> saveSourceImageUrl(String sourceImageUrl) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_hasAvatarKey, value);
+    await prefs.setString(_sourceImageUrlKey, sourceImageUrl);
+  }
+
+  Future<void> saveAvatarGlbUrl(String avatarGlbUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_avatarGlbUrlKey, avatarGlbUrl);
+  }
+
+  /// 계정 전환(가입/로그인/로그아웃) 시 이전 사용자 정보가 남지 않도록 비운다.
+  Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_heightKey);
+    await prefs.remove(_sourceImageUrlKey);
+    await prefs.remove(_avatarGlbUrlKey);
   }
 }

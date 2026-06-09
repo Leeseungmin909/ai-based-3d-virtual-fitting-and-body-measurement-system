@@ -4,8 +4,9 @@ import '../../../core/errors/ui_error_messages.dart';
 import '../../home/screens/home_view.dart';
 import '../../settings/screens/api_settings_view.dart';
 import '../services/auth_service.dart';
+import 'sign_up_page.dart';
 
-/// 사용자가 mock 로그인 흐름을 시작하는 화면이다.
+/// 사용자가 이메일/비밀번호로 로그인하는 화면이다.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -15,12 +16,28 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final AuthService _authService = AuthService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _signIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      _showError('이메일과 비밀번호를 입력해 주세요.');
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await _authService.signInWithGoogleMock();
+      await _authService.login(email: email, password: password);
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -32,6 +49,13 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _openSignUp() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SignUpPage()),
+    );
   }
 
   void _showError(String message) {
@@ -77,44 +101,57 @@ class _LoginPageState extends State<LoginPage> {
                     'AI 기반 3D 가상 피팅',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
-                  const SizedBox(height: 72),
+                  const SizedBox(height: 48),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: '이메일',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _isLoading ? null : _signIn(),
+                    decoration: const InputDecoration(
+                      labelText: '비밀번호',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     height: 56,
-                    child: OutlinedButton.icon(
+                    child: ElevatedButton(
                       onPressed: _isLoading ? null : _signIn,
-                      icon: _isLoading
+                      child: _isLoading
                           ? const SizedBox(
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(
-                              Icons.g_mobiledata,
-                              size: 34,
-                              color: Colors.black87,
+                          : const Text(
+                              '로그인',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                      label: Text(
-                        _isLoading ? '로그인 처리 중...' : 'Google 계정으로 계속하기',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _isLoading ? null : _openSignUp,
+                    child: const Text('계정이 없으신가요? 회원가입'),
+                  ),
                   TextButton.icon(
                     onPressed: _isLoading ? null : _openServerSettings,
                     icon: const Icon(Icons.dns_outlined, size: 18),
                     label: const Text('서버 주소 설정'),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    '현재는 테스트용 mock Google 로그인 API를 사용합니다.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),

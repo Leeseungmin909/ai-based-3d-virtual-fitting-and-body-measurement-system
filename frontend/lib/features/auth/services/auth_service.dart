@@ -1,22 +1,51 @@
 import '../../../core/services/api_client.dart';
 import '../../../core/services/token_storage.dart';
+import '../../../core/state/user_profile_store.dart';
 
-/// 실제 Google 로그인 대신 Spring mock 로그인 API를 호출한다.
+/// 이메일/비밀번호 회원가입·로그인 API를 호출하고 JWT를 저장한다.
 class AuthService {
-  AuthService({ApiClient? apiClient, TokenStorage? tokenStorage})
-    : _apiClient = apiClient ?? ApiClient(),
-      _tokenStorage = tokenStorage ?? TokenStorage();
+  AuthService({
+    ApiClient? apiClient,
+    TokenStorage? tokenStorage,
+    UserProfileStore? profileStore,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _tokenStorage = tokenStorage ?? TokenStorage(),
+        _profileStore = profileStore ?? UserProfileStore();
 
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
+  final UserProfileStore _profileStore;
 
-  /// 테스트 계정으로 로그인하고 반환된 JWT를 저장한다.
-  Future<void> signInWithGoogleMock() async {
-    final response = await _apiClient.postForm('/api/auth/google', {
-      'email': 'capstone_tester@gmail.com',
-      'name': 'Capstone Tester',
+  Future<void> signUp({
+    required String email,
+    required String name,
+    required String password,
+  }) async {
+    final response = await _apiClient.postJson('/api/auth/signup', {
+      'email': email,
+      'name': name,
+      'password': password,
     });
+    await _saveTokenFrom(response);
+  }
 
+  Future<void> login({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _apiClient.postJson('/api/auth/login', {
+      'email': email,
+      'password': password,
+    });
+    await _saveTokenFrom(response);
+  }
+
+  Future<void> signOut() async {
+    await _tokenStorage.clearToken();
+    await _profileStore.clear();
+  }
+
+  Future<void> _saveTokenFrom(dynamic response) async {
     if (response is! Map<String, dynamic>) {
       throw const ApiException(
         'Login response format is invalid.',
@@ -33,8 +62,12 @@ class AuthService {
     }
 
     await _tokenStorage.saveToken(token);
-  }
 
-  /// 저장된 JWT 토큰을 삭제한다.
-  Future<void> signOut() => _tokenStorage.clearToken();
+    // 이전 계정의 키/사진/아바타가 남지 않도록 비운 뒤, 서버가 준 키만 복원한다.
+    await _profileStore.clear();
+    final heightCm = response['heightCm'];
+    if (heightCm is num) {
+      await _profileStore.saveHeight(heightCm.toDouble());
+    }
+  }
 }

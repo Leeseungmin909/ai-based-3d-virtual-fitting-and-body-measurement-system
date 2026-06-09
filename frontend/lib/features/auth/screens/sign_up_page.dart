@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/errors/ui_error_messages.dart';
 import '../../home/screens/home_view.dart';
+import '../services/auth_service.dart';
 
-/// 앱 진입 전에 이름과 키 정보를 입력받는 화면이다.
+/// 이메일/비밀번호로 새 계정을 만드는 화면이다.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -11,11 +13,13 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  final AuthService _authService = AuthService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -24,6 +28,51 @@ class _SignUpPageState extends State<SignUpPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signUp() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      _showError('이름, 이메일, 비밀번호를 모두 입력해 주세요.');
+      return;
+    }
+    if (password.length < 4) {
+      _showError('비밀번호는 4자 이상이어야 합니다.');
+      return;
+    }
+    if (password != confirmPassword) {
+      _showError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signUp(
+        email: email,
+        name: name,
+        password: password,
+      );
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeView()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showError(UiErrorMessages.signUp(e));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    );
   }
 
   @override
@@ -36,6 +85,7 @@ class _SignUpPageState extends State<SignUpPage> {
           children: [
             TextField(
               controller: _nameController,
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: '이름',
                 border: OutlineInputBorder(),
@@ -44,6 +94,8 @@ class _SignUpPageState extends State<SignUpPage> {
             const SizedBox(height: 12),
             TextField(
               controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: '이메일',
                 border: OutlineInputBorder(),
@@ -53,6 +105,7 @@ class _SignUpPageState extends State<SignUpPage> {
             TextField(
               controller: _passwordController,
               obscureText: true,
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: '비밀번호',
                 border: OutlineInputBorder(),
@@ -62,6 +115,8 @@ class _SignUpPageState extends State<SignUpPage> {
             TextField(
               controller: _confirmPasswordController,
               obscureText: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _isLoading ? null : _signUp(),
               decoration: const InputDecoration(
                 labelText: '비밀번호 확인',
                 border: OutlineInputBorder(),
@@ -69,11 +124,14 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const HomeView()),
-              ),
-              child: const Text('가입하기'),
+              onPressed: _isLoading ? null : _signUp,
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('가입하기'),
             ),
           ],
         ),

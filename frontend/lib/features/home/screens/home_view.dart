@@ -10,7 +10,7 @@ import '../../profile/screens/profile_view.dart';
 import '../../scan/screens/photo_upload_view.dart';
 import '../../settings/screens/api_settings_view.dart';
 
-/// 주요 기능 화면으로 이동하는 홈 메뉴 화면이다.
+/// 사진 기반 피팅 흐름의 시작 화면이다.
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -20,25 +20,20 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final UserProfileStore _profileStore = UserProfileStore();
-  final TokenStorage _tokenStorage = TokenStorage();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showSetupIfNeeded());
-  }
 
   Future<void> _showSetupIfNeeded() async {
     final profile = await _profileStore.load();
-    if (!mounted || !profile.needsSetup) return;
-
-    showDialog(
+    if (!mounted || profile.hasHeight) return;
+    await showDialog<void>(
       context: context,
-      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('키 입력 필요'),
         content: const Text('신체 치수 계산과 피팅 기준 생성을 위해 키를 먼저 입력해 주세요.'),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('나중에'),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
@@ -47,7 +42,7 @@ class _HomeViewState extends State<HomeView> {
                 MaterialPageRoute(builder: (_) => const ProfileEditView()),
               );
             },
-            child: const Text('입력하러 가기'),
+            child: const Text('키 입력하기'),
           ),
         ],
       ),
@@ -55,104 +50,108 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future<void> _signOut() async {
-    await _tokenStorage.clearToken();
+    await TokenStorage().clearToken();
+    await _profileStore.clear();
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
-      (_) => false,
+      (route) => false,
     );
   }
 
-  void _openServerSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ApiSettingsView()),
-    );
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showSetupIfNeeded());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Fit360',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: const Text('Fit360'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.dns_outlined, color: Colors.black54),
-            onPressed: _openServerSettings,
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black54),
-            onPressed: _signOut,
-          ),
-          IconButton(
-            icon: const CircleAvatar(
-              radius: 15,
-              backgroundColor: Colors.deepPurple,
-              child: Icon(Icons.person, size: 18, color: Colors.white),
-            ),
+            tooltip: '마이페이지',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ProfileView()),
             ),
+            icon: const Icon(Icons.person_outline),
           ),
-          const SizedBox(width: 8),
+          IconButton(
+            tooltip: '서버 설정',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ApiSettingsView()),
+            ),
+            icon: const Icon(Icons.dns_outlined),
+          ),
+          IconButton(
+            tooltip: '로그아웃',
+            onPressed: _signOut,
+            icon: const Icon(Icons.logout),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: ListView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '사용할 기능을 선택해 주세요.',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+        children: [
+          const Text(
+            '사진 기반 가상 피팅',
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '키와 전신 사진 1장을 등록한 뒤 옷을 선택해 피팅 결과를 확인합니다.',
+            style: TextStyle(color: Colors.grey, height: 1.4),
+          ),
+          const SizedBox(height: 28),
+          _HomeActionCard(
+            icon: Icons.height,
+            title: '키 입력',
+            subtitle: '신체 치수와 피팅 기준 생성을 위한 키를 저장합니다.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileEditView()),
             ),
-            const SizedBox(height: 32),
-            _HomeMenuCard(
-              icon: Icons.threed_rotation,
-              title: '3D 모델 만들기',
-              subtitle: '10초 전신 영상으로 아바타 생성 요청',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PhotoUploadView()),
-              ),
+          ),
+          _HomeActionCard(
+            icon: Icons.photo_camera_outlined,
+            title: '전신 사진 등록',
+            subtitle: '사진 1장을 업로드해 AI 처리 입력으로 사용합니다.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PhotoUploadView()),
             ),
-            const SizedBox(height: 16),
-            _HomeMenuCard(
-              icon: Icons.checkroom,
-              title: '옷 조회 및 피팅',
-              subtitle: 'TOP/BOTTOM 의류를 선택해 피팅 기록 생성',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ClothingSelectView()),
-              ),
+          ),
+          _HomeActionCard(
+            icon: Icons.checkroom_outlined,
+            title: '옷 조회 및 피팅',
+            subtitle: 'TOP/BOTTOM 옷 목록을 확인하고 피팅 요청을 생성합니다.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ClothingSelectView()),
             ),
-            const SizedBox(height: 16),
-            _HomeMenuCard(
-              icon: Icons.history,
-              title: '피팅 기록',
-              subtitle: '서버에 저장된 피팅 요청 기록 확인',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const FittingHistoryView()),
-              ),
+          ),
+          _HomeActionCard(
+            icon: Icons.history_outlined,
+            title: '피팅 기록',
+            subtitle: '생성된 피팅 요청의 상태와 결과를 확인합니다.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FittingHistoryView()),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _HomeMenuCard extends StatelessWidget {
-  const _HomeMenuCard({
+class _HomeActionCard extends StatelessWidget {
+  const _HomeActionCard({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -166,49 +165,14 @@ class _HomeMenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.deepPurple.shade100),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 34, color: Colors.deepPurple),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.deepPurple),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
       ),
     );
   }
