@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AVATARFIT — 3D 뷰어</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080810;--surface:#10101c;--surface2:#18182a;--accent:#7c6cfc;--accent2:#fc6cc8;--accent3:#6cfcb8;--text:#f0f0ff;--muted:#6b6b88;--border:#252538;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+    .topbar{height:50px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;}
+    .logo{font-size:15px;font-weight:800;}.logo span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .sep{width:1px;height:20px;background:var(--border);}
+    .ttl{font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;flex:1;}
+    .tbtn{padding:6px 13px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Syne',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:.2s;text-decoration:none;display:inline-flex;align-items:center;}
+    .tbtn:hover{border-color:var(--accent);color:var(--accent);}
+    .main{flex:1;display:flex;overflow:hidden;}
+    #cw{flex:1;position:relative;background:radial-gradient(ellipse at center,#14142a 0%,#080810 70%);}
+    canvas{display:block;width:100%;height:100%;}
+    .ld{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,16,.92);z-index:5;}
+    .sp{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:13px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .lt{font-family:'Space Mono',monospace;font-size:13px;color:var(--muted);}
+    .hints{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;background:rgba(16,16,28,.88);border:1px solid var(--border);border-radius:18px;padding:8px 16px;backdrop-filter:blur(10px);}
+    .hint{display:flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);}
+    .key{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:10px;}
+    .er{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(252,108,108,.12);border:1px solid rgba(252,108,108,.35);border-radius:9px;padding:10px 18px;font-size:12px;color:#fc6c6c;font-family:'Space Mono',monospace;display:none;z-index:10;max-width:80%;text-align:center;}
+    .er.show{display:block;}
+    /* 패널 */
+    .panel{width:256px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
+    .ps{padding:14px;border-bottom:1px solid var(--border);}
+    .pt{font-size:11px;font-family:'Space Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+    .ic{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px;display:flex;align-items:center;gap:9px;}
+    .ii{font-size:20px;width:36px;height:36px;background:var(--bg);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .ib h4{font-size:13px;font-weight:600;margin-bottom:3px;}
+    .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;font-size:11px;font-family:'Space Mono',monospace;}
+    .chip.ok{background:rgba(108,252,184,.1);color:var(--accent3);border:1px solid rgba(108,252,184,.2);}
+    .chip.ld2{background:rgba(124,108,252,.1);color:var(--accent);border:1px solid rgba(124,108,252,.2);}
+    .dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+    /* 의상 업로드 버튼 */
+    .cloth-btns{display:flex;gap:8px;margin-bottom:10px;}
+    .cbtn{flex:1;padding:9px 6px;border-radius:8px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;text-align:center;}
+    .cbtn:hover{border-color:var(--accent2);color:var(--accent2);}
+    .cbtn.loaded{border-style:solid;border-color:var(--accent3);color:var(--accent3);background:rgba(108,252,184,.07);}
+    .cloth-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;}
+    .cloth-item .ci-name{font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cloth-item .ci-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px;}
+    .cloth-item .ci-rm:hover{color:#fc6c6c;}
+    .cloth-empty{font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;text-align:center;padding:10px 0;}
+    /* 슬라이더 */
+    .ctrl{margin-bottom:10px;}
+    .cl{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:4px;display:block;}
+    .sr{display:flex;align-items:center;gap:8px;}
+    input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--border);border-radius:2px;outline:none;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--accent);border-radius:50%;cursor:pointer;}
+    .sv{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);min-width:28px;text-align:right;}
+    .dl-btn{width:100%;padding:9px;background:linear-gradient(135deg,rgba(124,108,252,.12),rgba(252,108,200,.12));border:1px solid rgba(124,108,252,.3);border-radius:9px;color:var(--accent);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:block;transition:.2s;}
+    .dl-btn:hover{background:linear-gradient(135deg,rgba(124,108,252,.22),rgba(252,108,200,.22));}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">AVATAR<span>FIT</span></div>
+  <div class="sep"></div>
+  <div class="ttl" id="ttl">뷰어 로딩 중...</div>
+  <button class="tbtn" onclick="resetCam()">📷 리셋</button>
+  <button class="tbtn" onclick="window.history.back()">← 뒤로</button>
+</div>
+
+<div class="main">
+  <div id="cw">
+    <canvas id="c"></canvas>
+    <div class="ld" id="ld"><div class="sp"></div><div class="lt" id="lt">아바타 불러오는 중...</div></div>
+    <div class="er" id="er"></div>
+    <div class="hints">
+      <div class="hint"><span class="key">드래그</span>회전</div>
+      <div class="hint"><span class="key">스크롤</span>줌</div>
+      <div class="hint"><span class="key">우클릭</span>이동</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <!-- 아바타 상태 -->
+    <div class="ps">
+      <div class="pt">아바타</div>
+      <div class="ic"><div class="ii">🧑</div><div class="ib"><h4>SMPL-X</h4><div class="chip ld2" id="achip"><div class="dot"></div> 로딩 중</div></div></div>
+    </div>
+
+    <!-- 의상 -->
+    <div class="ps">
+      <div class="pt">의상 (GLB)</div>
+      <div class="cloth-btns">
+        <button class="cbtn" id="btn-upper" onclick="triggerCloth('upper')">👕 상의</button>
+        <button class="cbtn" id="btn-lower" onclick="triggerCloth('lower')">👖 하의</button>
+      </div>
+      <input type="file" id="cf-upper" accept=".glb,.gltf,.jpg,.jpeg,.png,.webp" style="display:none" onchange="uploadCloth(event,'upper')">
+      <input type="file" id="cf-lower" accept=".glb,.gltf,.jpg,.jpeg,.png,.webp" style="display:none" onchange="uploadCloth(event,'lower')">
+      <div id="cloth-list"><div class="cloth-empty">의상 없음</div></div>
+    </div>
+
+    <!-- 뷰어 설정 -->
+    <div class="ps">
+      <div class="pt">설정</div>
+      <div class="ctrl"><span class="cl">조명</span><div class="sr">
+        <input type="range" min="0" max="3" step="0.1" value="1.2"
+               oninput="setLight(+this.value);document.getElementById('lv').textContent=this.value">
+        <span class="sv" id="lv">1.2</span>
+      </div></div>
+      <div class="ctrl"><span class="cl">아바타 투명도</span><div class="sr">
+        <input type="range" min="0.1" max="1" step="0.05" value="1"
+               oninput="setAvatarOpacity(+this.value);document.getElementById('av').textContent=parseFloat(this.value).toFixed(2)">
+        <span class="sv" id="av">1.00</span>
+      </div></div>
+      <div class="ctrl"><span class="cl">하의 색상</span><div class="sr">
+        <input type="color" id="pants-color" value="#2d4178"
+               oninput="changePantsColor(this.value)"
+               style="flex:1;height:28px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:transparent;">
+      </div></div>
+    </div>
+
+    <!-- 다운로드 -->
+    <div class="ps">
+      <a class="dl-btn" href="/api/avatar-glb/{{ job_id }}" download="{{ job_id }}_avatar.glb">⬇ GLB 다운로드</a>
+    </div>
+  </div>
+</div>
+
+<!-- 에러 캐처 -->
+<script>
+window.addEventListener('error', function(e) {
+  document.getElementById('ld').style.display = 'none';
+  var er = document.getElementById('er');
+  er.textContent = 'JS 오류: ' + (e.message || String(e.error));
+  er.classList.add('show');
+});
+window.addEventListener('unhandledrejection', function(e) {
+  document.getElementById('ld').style.display = 'none';
+  var er = document.getElementById('er');
+  er.textContent = '로드 오류: ' + (e.reason?.message || String(e.reason));
+  er.classList.add('show');
+});
+</script>
+
+<script type="module">
+import * as THREE from '/static/js/three.module.js';
+import { OrbitControls } from '/static/js/jsm/controls/OrbitControls.js';
+import { GLTFLoader }    from '/static/js/jsm/loaders/GLTFLoader.js';
+
+const jobId  = '{{ job_id }}';
+document.getElementById('ttl').textContent = 'Job: ' + jobId;
+
+// ── 렌더러 ───────────────────────────────────────────
+const canvas   = document.getElementById('c');
+const cw       = document.getElementById('cw');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace  = THREE.SRGBColorSpace;
+renderer.toneMapping       = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+
+// ── 씬 ──────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d1c);
+scene.fog = new THREE.FogExp2(0x0d0d1c, 0.025);
+
+// ── 카메라 + 컨트롤 ─────────────────────────────────
+const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+camera.position.set(0, 1.0, 3.5);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.05;
+controls.minDistance = 0.3;    controls.maxDistance  = 10;
+controls.target.set(0, 0.85, 0); controls.update();
+
+// ── 조명 ────────────────────────────────────────────
+const ambient = new THREE.AmbientLight(0xffffff, 0.5); scene.add(ambient);
+const dirKey  = new THREE.DirectionalLight(0xffffff, 1.2);
+dirKey.position.set(3, 5, 3); dirKey.castShadow = true;
+dirKey.shadow.mapSize.set(2048, 2048); scene.add(dirKey);
+const dl1 = new THREE.DirectionalLight(0x8866ff, .3); dl1.position.set(-3, 3, -3); scene.add(dl1);
+const dl2 = new THREE.DirectionalLight(0xff6699, .2); dl2.position.set(0, 2, -4);  scene.add(dl2);
+
+// ── 바닥 ────────────────────────────────────────────
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(3, 64),
+  new THREE.MeshStandardMaterial({ color: 0x111122, roughness: .8, metalness: .1 })
+);
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const glow = new THREE.Mesh(
+  new THREE.CircleGeometry(1, 64),
+  new THREE.MeshBasicMaterial({ color: 0x7c6cfc, transparent: true, opacity: .07 })
+);
+glow.rotation.x = -Math.PI/2; glow.position.y = .001; scene.add(glow);
+
+// ── 리사이즈 ────────────────────────────────────────
+function resize() {
+  const w = cw.clientWidth, h = cw.clientHeight;
+  renderer.setSize(w, h); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+
+// ── 렌더 루프 ────────────────────────────────────────
+(function loop() {
+  requestAnimationFrame(loop); controls.update();
+  glow.material.opacity = .05 + Math.sin(Date.now()*.002)*.02;
+  renderer.render(scene, camera);
+})();
+
+// ── 상태 ────────────────────────────────────────────
+let avatarModel      = null;
+let avatarOffset     = new THREE.Vector3(0, 0, 0);  // SMPL-X → 뷰어 오프셋
+let bodyMeasurements = null;   // SMPL-X 신체 치수
+let bodyProfile      = [];     // Y 구간별 체형 단면 (타원 반축)
+let armCapsules      = [];     // 팔 캡슐 충돌체 목록
+const clothes        = { upper: null, lower: null };
+
+// ── 아바타 로드 ─────────────────────────────────────
+new GLTFLoader().load('/api/avatar-glb/' + jobId, gltf => {
+  const m   = gltf.scene;
+  const box = new THREE.Box3().setFromObject(m);
+  const sz  = box.getSize(new THREE.Vector3());
+  const ctr = box.getCenter(new THREE.Vector3());
+  avatarOffset.set(-ctr.x, -box.min.y, -ctr.z);
+  m.position.copy(avatarOffset);
+  m.traverse(n => {
+    if (!n.isMesh) return;
+    n.castShadow = true; n.receiveShadow = true;
+    // 아바타 메쉬를 살짝 뒤로 → 의상이 앞에 렌더됨
+    applyMat(n.material, false);
+  });
+  scene.add(m); avatarModel = m;
+
+  camera.position.set(0, sz.y*.55, sz.y*1.8);
+  controls.target.set(0, sz.y*.45, 0); controls.update();
+
+  document.getElementById('achip').className = 'chip ok';
+  document.getElementById('achip').innerHTML = '<div class="dot"></div> 로드 완료';
+  document.getElementById('ld').style.display = 'none';
+
+  // 체형 단면 프로파일 구축 (단일 패스, O(N_verts))
+  bodyProfile = buildBodyProfile();
+  console.log('[Profile] 단면 프로파일:', bodyProfile.length, '구간');
+
+  // 신체 치수 + 상의 GLB 자동 로드
+  fetch('/api/job/' + jobId)
+    .then(r => r.json())
+    .then(job => {
+      bodyMeasurements = job.measurements || null;
+      if (bodyMeasurements) {
+        console.log('[Fit] 신체 치수 로드 완료', bodyMeasurements);
+        buildArmCapsules();
+      }
+
+      // ── 상의/하의 자동 로드 (이미지 or GLB 자동 분기) ──
+      function _autoLoad(url, type, icon) {
+        if (!url) return;
+        const name      = url.split('/').pop();
+        const isImg     = /\.(png|jpg|jpeg|webp)$/i.test(url);
+        const isBlender = url.includes('_blender_');
+
+        if (isImg) {
+          // 이미지 → 체형 기반 메쉬 (좌표 이미 맞춰져 있음)
+          const model = generateClothFromImage(url, type);
+          if (!model) return;
+          scene.add(model);
+          clothes[type] = { model, name };
+          updateClothList(); syncAvatarOpacity();
+          const btn = document.getElementById('btn-' + type);
+          btn.classList.add('loaded');
+          btn.textContent = icon + name.slice(0, 14);
+        } else {
+          new GLTFLoader().load(url, gltf => {
+            const m = gltf.scene;
+            if (isBlender) {
+              // Blender 피팅: SMPL-X 좌표 그대로 → avatar offset만 적용
+              m.position.copy(avatarOffset);
+              m.traverse(n => {
+                if (!n.isMesh) return;
+                n.castShadow = true; n.receiveShadow = true; n.renderOrder = 1;
+                applyMat(n.material, true);
+              });
+            } else {
+              positionCloth(m, type);
+            }
+            scene.add(m);
+            clothes[type] = { model: m, name };
+            updateClothList(); syncAvatarOpacity();
+            const btn = document.getElementById('btn-' + type);
+            btn.classList.add('loaded');
+            btn.textContent = icon + name.slice(0, 14);
+          }, undefined, err => showEr(type + ' 로드 실패: ' + (err?.message || err)));
+        }
+      }
+      _autoLoad(job.shirt_glb_url, 'upper', '👕 ');
+      _autoLoad(job.pants_glb_url, 'lower', '👖 ');
+    });
+
+}, xhr => {
+  if (xhr.total > 0)
+    document.getElementById('lt').textContent = `로딩 중... ${Math.round(xhr.loaded/xhr.total*100)}%`;
+}, err => {
+  document.getElementById('ld').style.display = 'none';
+  showEr('GLB 오류: ' + (err?.message || String(err)));
+});
+
+// ── 재질 설정 ────────────────────────────────────────
+function applyMat(mat, isCloth) {
+  if (!mat) return;
+  if (Array.isArray(mat)) { mat.forEach(m => applyMat(m, isCloth)); return; }
+  if (isCloth) {
+    // 의상: 아바타보다 앞에, 파고드는 현상 방지
+    mat.depthWrite          = true;
+    mat.depthTest           = true;
+    mat.polygonOffset       = true;
+    mat.polygonOffsetFactor = -4;
+    mat.polygonOffsetUnits  = -4;
+    mat.side = THREE.DoubleSide;
+    // 색상 진하게 (0.55배)
+    if (mat.color) mat.color.multiplyScalar(0.55);
+  } else {
+    // 아바타: 뒤로 밀어서 의상이 위에 보임
+    mat.polygonOffset      = true;
+    mat.polygonOffsetFactor = 1;
+    mat.polygonOffsetUnits  = 1;
+  }
+  mat.needsUpdate = true;
+}
+
+// ── 팔 캡슐 충돌체 구축 ───────────────────────────────────────────────
+function buildArmCapsules() {
+  const J = bodyMeasurements?.arm_joints;
+  const R = bodyMeasurements?.arm_radius;
+  if (!J || !R) return;
+
+  const v = k => new THREE.Vector3(...J[k]);
+  armCapsules = [
+    { a: v('left_shoulder'),  b: v('left_elbow'),    r: R.left_upper  },
+    { a: v('left_elbow'),     b: v('left_wrist'),    r: R.left_lower  },
+    { a: v('right_shoulder'), b: v('right_elbow'),   r: R.right_upper },
+    { a: v('right_elbow'),    b: v('right_wrist'),   r: R.right_lower },
+  ];
+  console.log('[Fit] 팔 캡슐:', armCapsules.length, '개');
+}
+
+// ── 캡슐 내부 점 → 표면으로 밀어내기 ────────────────────────────────
+// 반환값: 변형이 일어났으면 true
+function _pushFromCapsules(v) {
+  for (const cap of armCapsules) {
+    const AB = cap.b.clone().sub(cap.a);
+    const t  = Math.max(0, Math.min(1, cap.a.clone().negate().add(v).dot(AB) / AB.lengthSq()));
+    const C  = cap.a.clone().addScaledVector(AB, t);   // 세그먼트 최근접점
+    const d  = v.distanceTo(C);
+    if (d < cap.r && d > 0.001) {
+      // 캡슐 내부 → 표면으로 밀어냄
+      v.copy(C).addScaledVector(v.clone().sub(C).normalize(), cap.r);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ── 체형 단면 프로파일 구축 (아바타 버텍스 단일 패스) ─────────────────
+function buildBodyProfile() {
+  if (!avatarModel) return [];
+  avatarModel.updateMatrixWorld(true);
+
+  const STEP = 0.04;  // 4cm 간격
+  const aBox = new THREE.Box3().setFromObject(avatarModel);
+  const bins  = Math.ceil(aBox.max.y / STEP) + 1;
+
+  const xLo = new Float32Array(bins).fill( Infinity);
+  const xHi = new Float32Array(bins).fill(-Infinity);
+  const zLo = new Float32Array(bins).fill( Infinity);
+  const zHi = new Float32Array(bins).fill(-Infinity);
+
+  avatarModel.traverse(n => {
+    if (!n.isMesh) return;
+    const pos = n.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const v = new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(n.matrixWorld);
+      if (Math.abs(v.x) > 0.35) continue;  // 팔 제외
+      const b = Math.floor(v.y / STEP);
+      if (b < 0 || b >= bins) continue;
+      if (v.x < xLo[b]) xLo[b] = v.x;
+      if (v.x > xHi[b]) xHi[b] = v.x;
+      if (v.z < zLo[b]) zLo[b] = v.z;
+      if (v.z > zHi[b]) zHi[b] = v.z;
+    }
+  });
+
+  const profile = [];
+  for (let b = 0; b < bins; b++) {
+    if (xHi[b] > xLo[b] && zHi[b] > zLo[b])
+      profile.push({ y: (b + 0.5) * STEP, ax: (xHi[b] - xLo[b]) / 2, bz: (zHi[b] - zLo[b]) / 2 });
+  }
+  return profile;
+}
+
+// Y 위치에 해당하는 단면 반환 (10cm 이내)
+function getProfileAtY(y) {
+  let best = null, bestD = 0.10;
+  for (const p of bodyProfile) {
+    const d = Math.abs(p.y - y);
+    if (d < bestD) { bestD = d; best = p; }
+  }
+  return best;
+}
+
+// ── 옷 버텍스를 체형 타원면 위로 변형 ─────────────────────────────────
+function conformClothToBody(clothModel) {
+  if (bodyProfile.length === 0) return;
+
+  const MARGIN = 1.04;  // 4% 여유 (몸에 딱 붙지 않게)
+  clothModel.updateMatrixWorld(true);
+
+  clothModel.traverse(n => {
+    if (!n.isMesh) return;
+    const pos  = n.geometry.attributes.position;
+    const mat  = n.matrixWorld;
+    const matI = new THREE.Matrix4().copy(mat).invert();
+    let changed = false;
+
+    for (let i = 0; i < pos.count; i++) {
+      const v = new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(mat);
+      let moved = false;
+
+      // ① 몸통 타원 충돌 — 메시 아티팩트(찢김) 발생으로 비활성화
+      // const p = getProfileAtY(v.y);
+      // if (p) { ... }
+
+      // ② 팔 캡슐 충돌 (소매 있는 옷에 적용) — 비활성화
+      // if (_pushFromCapsules(v)) moved = true;
+
+      if (moved) {
+        const lv = v.clone().applyMatrix4(matI);
+        pos.setXYZ(i, lv.x, lv.y, lv.z);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      pos.needsUpdate = true;
+      n.geometry.computeVertexNormals();
+    }
+  });
+}
+
+// ── 아바타 토르소 너비 측정 (팔 제외: |X|<0.35m 필터) ───────────────
+function getAvatarTorsoAtY(yMin, yMax) {
+  let xLo = Infinity, xHi = -Infinity;
+  let zLo = Infinity, zHi = -Infinity;
+  avatarModel.traverse(n => {
+    if (!n.isMesh) return;
+    const pos = n.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const v = new THREE.Vector3()
+        .fromBufferAttribute(pos, i)
+        .applyMatrix4(n.matrixWorld);
+      // |X| < 0.35m 로 팔 제외 → 토르소(몸통)만 측정
+      if (v.y >= yMin && v.y <= yMax && Math.abs(v.x) < 0.35) {
+        if (v.x < xLo) xLo = v.x; if (v.x > xHi) xHi = v.x;
+        if (v.z < zLo) zLo = v.z; if (v.z > zHi) zHi = v.z;
+      }
+    }
+  });
+  return {
+    w: xHi > xLo ? xHi - xLo : null,
+    d: zHi > zLo ? zHi - zLo : null,
+  };
+}
+
+// ── 의상 위치·스케일 자동 조정 ──────────────────────────────────────
+// 원본 GLB 그대로 로드 → Three.js에서 단위감지 + Y스케일만 적용
+function positionCloth(model, type) {
+  if (!avatarModel) return;
+  avatarModel.updateMatrixWorld(true);
+
+  // ① 원본 크기 측정 (scale·position 리셋)
+  model.scale.set(1, 1, 1);
+  model.position.set(0, 0, 0);
+  model.updateMatrixWorld(true);
+  const rawBox = new THREE.Box3().setFromObject(model);
+  const rawSz  = rawBox.getSize(new THREE.Vector3());
+  if (rawSz.y < 1e-4) { console.warn('[Fit] empty mesh, skip'); return; }
+
+  // ② 단위 감지: max 차원이 3m 초과 → cm 단위로 판단 → 0.01 배율
+  const maxDim  = Math.max(rawSz.x, rawSz.y, rawSz.z);
+  const unitS   = maxDim > 3.0 ? 0.01 : 1.0;
+
+  // ③ 신체 치수 (SMPL-X → 미터 단위)
+  const aBox = new THREE.Box3().setFromObject(avatarModel);
+  const aH   = aBox.max.y;
+  const meas = bodyMeasurements?.[type === 'upper' ? 'shirt' : 'pants'];
+
+  // ④ Y 스케일: body 구간 높이에 맞춤 (X/Z는 단위 변환만 — 디자인 비율 유지)
+  let sy;
+  if (meas && rawSz.y > 0) {
+    const bodyH = meas.y_max - meas.y_min;
+    sy = (bodyH + 0.04) / rawSz.y;   // raw unit 기준 → 4cm 여유
+  } else {
+    // fallback: 아바타 높이 비율
+    const targetH = aH * (type === 'upper' ? 0.38 : 0.52);
+    sy = targetH / rawSz.y;
+  }
+
+  // sx = sz = unitS (단위변환만, 소매·다리폭 비율 보존)
+  model.scale.set(unitS, sy, unitS);
+  model.updateMatrixWorld(true);
+  console.log(`[Fit] ${type}  unitS=${unitS}  sy=${sy.toFixed(4)}  rawH=${rawSz.y.toFixed(3)}`);
+
+  // ⑤ 위치 정렬
+  const box2 = new THREE.Box3().setFromObject(model);
+  const ctr2 = box2.getCenter(new THREE.Vector3());
+
+  model.position.x = -ctr2.x;                  // X 중앙
+  model.position.z = -ctr2.z + 0.06;           // Z: 아바타 앞 6cm
+
+  if (type === 'upper') {
+    const posY = meas ? meas.y_mid : aH * 0.67;
+    model.position.y = posY - ctr2.y;          // 상체 중앙 정렬
+  } else {
+    model.position.y = -box2.min.y;            // 하단 → 발바닥(Y=0)
+  }
+
+  model.traverse(n => {
+    if (!n.isMesh) return;
+    n.castShadow    = true;
+    n.receiveShadow = true;
+    n.renderOrder   = 1;
+    applyMat(n.material, true);
+  });
+}
+
+// ── 이미지로 의상 메쉬 생성 (아바타 체형 기반, 클라이언트 전용) ────────
+function generateClothFromImage(imgUrl, type) {
+  if (!avatarModel) return null;
+  avatarModel.updateMatrixWorld(true);
+
+  // ① 아바타 버텍스·페이스 수집 (월드 공간)
+  const wPos = [], wIdx = [];
+  let base = 0;
+  avatarModel.traverse(n => {
+    if (!n.isMesh) return;
+    const pos = n.geometry.attributes.position;
+    const mat = n.matrixWorld;
+    for (let i = 0; i < pos.count; i++)
+      wPos.push(new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(mat));
+    if (n.geometry.index) {
+      const arr = n.geometry.index.array;
+      for (let i = 0; i < arr.length; i += 3)
+        wIdx.push(arr[i]+base, arr[i+1]+base, arr[i+2]+base);
+    } else {
+      for (let i = 0; i < pos.count; i += 3)
+        wIdx.push(i+base, i+1+base, i+2+base);
+    }
+    base += pos.count;
+  });
+
+  // ② Y 범위 (신체 치수 or fallback)
+  const aBox = new THREE.Box3().setFromObject(avatarModel);
+  const aH   = aBox.max.y;
+  const meas = bodyMeasurements?.[type === 'upper' ? 'shirt' : 'pants'];
+  let yMin, yMax;
+  if (meas) {
+    yMin = type === 'upper' ? meas.y_min * 0.86 : 0.01;
+    yMax = type === 'upper' ? meas.y_max * 1.06 : meas.y_max * 1.06;
+  } else {
+    yMin = type === 'upper' ? aH * 0.48 : 0.01;
+    yMax = type === 'upper' ? aH * 0.93 : aH * 0.59;
+  }
+
+  // ③ 영역 내 페이스 필터
+  const vMask = wPos.map(v => v.y >= yMin && v.y <= yMax);
+  const subIdx = [];
+  for (let i = 0; i < wIdx.length; i += 3) {
+    const a = wIdx[i], b = wIdx[i+1], c = wIdx[i+2];
+    if (vMask[a] && vMask[b] && vMask[c]) subIdx.push(a, b, c);
+  }
+  if (subIdx.length === 0) { console.warn('[GenCloth] 범위 내 페이스 없음'); return null; }
+
+  // ④ 재인덱싱
+  const usedSet = new Set(subIdx);
+  const oldToNew = new Map();
+  const subVerts = [];
+  usedSet.forEach(old => { oldToNew.set(old, subVerts.length); subVerts.push(wPos[old].clone()); });
+  const subFaces = subIdx.map(i => oldToNew.get(i));
+
+  // ⑤ 면적 가중 버텍스 노말
+  const normals = subVerts.map(() => new THREE.Vector3());
+  for (let i = 0; i < subFaces.length; i += 3) {
+    const i0=subFaces[i], i1=subFaces[i+1], i2=subFaces[i+2];
+    const e1 = subVerts[i1].clone().sub(subVerts[i0]);
+    const e2 = subVerts[i2].clone().sub(subVerts[i0]);
+    const fn = e1.clone().cross(e2);
+    normals[i0].add(fn); normals[i1].add(fn); normals[i2].add(fn);
+  }
+  normals.forEach(n => n.normalize());
+
+  // ⑥ 3cm 팽창 (의상 두께)
+  const OFFSET = 0.03;
+  const inflVerts = subVerts.map((v, i) => v.clone().addScaledVector(normals[i], OFFSET));
+
+  // ⑦ UV: 실린더 매핑 (전면=텍스처 중앙 u=0.5, 후면=가장자리)
+  let yMinV = Infinity, yMaxV = -Infinity;
+  inflVerts.forEach(v => { if (v.y < yMinV) yMinV=v.y; if (v.y > yMaxV) yMaxV=v.y; });
+  const yRng = yMaxV - yMinV + 1e-8;
+  const uvArr = new Float32Array(inflVerts.length * 2);
+  inflVerts.forEach((v, i) => {
+    const angle = Math.atan2(-v.x, v.z);   // 전면=0, 범위 -π~+π
+    const u     = ((angle / (Math.PI * 2)) + 0.5 + 1.0) % 1.0;
+    const vc    = 1.0 - (v.y - yMinV) / yRng;
+    uvArr[i*2]=u; uvArr[i*2+1]=vc;
+  });
+
+  // ⑧ BufferGeometry
+  const posArr = new Float32Array(inflVerts.length * 3);
+  inflVerts.forEach((v,i) => { posArr[i*3]=v.x; posArr[i*3+1]=v.y; posArr[i*3+2]=v.z; });
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+  geom.setAttribute('uv',       new THREE.BufferAttribute(uvArr,  2));
+  geom.setIndex(subFaces);
+  geom.computeVertexNormals();
+
+  // ⑨ 텍스처 + 재질
+  const tex = new THREE.TextureLoader().load(imgUrl);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex, side: THREE.DoubleSide, roughness: 0.85, metalness: 0.0,
+  });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.castShadow = true; mesh.receiveShadow = true; mesh.renderOrder = 1;
+  const group = new THREE.Group();
+  group.add(mesh);
+  console.log(`[GenCloth] ${type}  verts=${inflVerts.length}  faces=${subFaces.length/3}`);
+  return group;
+}
+
+// ── 의상 업로드 UI ───────────────────────────────────
+window.triggerCloth = type => document.getElementById('cf-' + type).click();
+
+window.uploadCloth = (e, type) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (clothes[type]?.model) { scene.remove(clothes[type].model); clothes[type] = null; }
+  e.target.value = '';
+  const icon = type === 'upper' ? '👕 ' : '👖 ';
+
+  const isImg = /\.(png|jpg|jpeg|webp)$/i.test(file.name);
+  if (isImg) {
+    const imgUrl = URL.createObjectURL(file);
+    const model  = generateClothFromImage(imgUrl, type);
+    if (!model) { showEr('체형 메쉬 생성 실패'); return; }
+    scene.add(model);
+    clothes[type] = { model, name: file.name };
+    updateClothList(); syncAvatarOpacity();
+    const btn = document.getElementById('btn-' + type);
+    btn.classList.add('loaded');
+    btn.textContent = icon + file.name.slice(0, 12);
+  } else {
+    const url = URL.createObjectURL(file);
+    new GLTFLoader().load(url, gltf => {
+      URL.revokeObjectURL(url);
+      const m = gltf.scene;
+      positionCloth(m, type);
+      scene.add(m);
+      clothes[type] = { model: m, name: file.name };
+      updateClothList(); syncAvatarOpacity();
+      const btn = document.getElementById('btn-' + type);
+      btn.classList.add('loaded');
+      btn.textContent = icon + file.name.slice(0, 12);
+    }, undefined, err => showEr('의상 로드 실패: ' + (err?.message || String(err))));
+  }
+};
+
+function updateClothList() {
+  const el = document.getElementById('cloth-list');
+  const items = Object.entries(clothes)
+    .filter(([, v]) => v)
+    .map(([type, v]) => `
+      <div class="cloth-item">
+        <span>${type === 'upper' ? '👕' : '👖'}</span>
+        <span class="ci-name">${v.name}</span>
+        <button class="ci-rm" onclick="removeCloth('${type}')">✕</button>
+      </div>`).join('');
+  el.innerHTML = items || '<div class="cloth-empty">의상 없음</div>';
+}
+
+window.removeCloth = type => {
+  if (clothes[type]?.model) scene.remove(clothes[type].model);
+  clothes[type] = null;
+  const btn = document.getElementById('btn-' + type);
+  btn.classList.remove('loaded');
+  btn.textContent = type === 'upper' ? '👕 상의' : '👖 하의';
+  updateClothList();
+  syncAvatarOpacity();
+};
+
+// ── 전역 컨트롤 ─────────────────────────────────────
+window.setLight = v => { dirKey.intensity = v; ambient.intensity = v * .4; };
+window.setAvatarOpacity = v => {
+  if (!avatarModel) return;
+  avatarModel.traverse(n => {
+    if (n.isMesh && n.material) {
+      const mats = Array.isArray(n.material) ? n.material : [n.material];
+      mats.forEach(m => { m.transparent = v < 1; m.opacity = v; m.needsUpdate = true; });
+    }
+  });
+  // 슬라이더 & 표시값 동기화
+  const sl = document.querySelector('input[oninput*="setAvatarOpacity"]');
+  const lbl = document.getElementById('av');
+  if (sl)  sl.value = v;
+  if (lbl) lbl.textContent = parseFloat(v).toFixed(2);
+};
+
+// 옷 착용 여부에 따라 아바타 투명도 + depthWrite 자동 조절
+function syncAvatarOpacity() {
+  const hasCloth = clothes.upper || clothes.lower;
+  setAvatarOpacity(hasCloth ? 0.72 : 1.0);
+
+  // 옷 착용 시 아바타 depthWrite 끄기 → 옷이 항상 아바타 위에 렌더됨
+  if (!avatarModel) return;
+  avatarModel.traverse(n => {
+    if (!n.isMesh) return;
+    const mats = Array.isArray(n.material) ? n.material : [n.material];
+    mats.forEach(m => {
+      m.depthWrite  = !hasCloth;
+      m.needsUpdate = true;
+    });
+  });
+}
+window.resetCam = () => {
+  if (!avatarModel) return;
+  const b = new THREE.Box3().setFromObject(avatarModel);
+  const s = b.getSize(new THREE.Vector3());
+  camera.position.set(0, s.y*.55, s.y*1.8);
+  controls.target.set(0, s.y*.45, 0); controls.update();
+};
+
+// ── 하의 색상 변경 ────────────────────────────────────
+window.changePantsColor = function(hex) {
+  const r = parseInt(hex.slice(1,3), 16) / 255;
+  const g = parseInt(hex.slice(3,5), 16) / 255;
+  const b = parseInt(hex.slice(5,7), 16) / 255;
+
+  // 1) 하의 GLB가 있으면 재질 색 변경
+  if (clothes.lower?.model) {
+    clothes.lower.model.traverse(n => {
+      if (!n.isMesh) return;
+      const mats = Array.isArray(n.material) ? n.material : [n.material];
+      mats.forEach(m => { m.color.setRGB(r, g, b); m.needsUpdate = true; });
+    });
+  }
+
+  // 2) 아바타 메쉬 하의 영역 버텍스 컬러 업데이트 (Y 0.05~0.90m)
+  if (!avatarModel) return;
+  avatarModel.traverse(n => {
+    if (!n.isMesh) return;
+    const pos = n.geometry.attributes.position;
+    const col = n.geometry.attributes.color;
+    if (!col) return;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      if (y >= 0.05 && y < 0.90) col.setXYZ(i, r, g, b);
+    }
+    col.needsUpdate = true;
+  });
+};
+
+function showEr(msg) {
+  const er = document.getElementById('er');
+  er.textContent = msg; er.classList.add('show');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
+numpy<2
+opencv-python-headless==4.10.0.84
+mediapipe==0.10.14
+torch
+smplx
+trimesh==4.5.3
+pyrender
+pygltflib
+pymeshlab
+Pillow
+scipy
