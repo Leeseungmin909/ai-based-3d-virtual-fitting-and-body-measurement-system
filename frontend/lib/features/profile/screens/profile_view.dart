@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/config/api_config.dart';
 import '../../../core/state/user_profile_store.dart';
 import 'profile_edit_view.dart';
 
@@ -40,10 +41,21 @@ class ProfileView extends StatelessWidget {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.accessibility_new),
-                title: const Text('아바타 상태'),
-                subtitle: Text(profile?.hasAvatar == true ? '생성됨' : '미생성'),
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('원본 사진'),
+                subtitle: Text(profile?.hasSourceImage == true ? '등록됨' : '미등록'),
               ),
+              if (profile?.hasSourceImage == true) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    ApiConfig.fileUrl(profile!.sourceImageUrl),
+                    height: 220,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ],
             ],
           );
         },

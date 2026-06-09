@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/config/api_config.dart';
 
-/// 로컬 시연용 Spring API 서버 주소를 변경할 수 있게 한다.
+/// 로컬 시연 환경에 맞게 Spring API 서버 주소를 변경하는 화면이다.
 class ApiSettingsView extends StatefulWidget {
   const ApiSettingsView({super.key});
 
@@ -81,7 +81,8 @@ class _ApiSettingsViewState extends State<ApiSettingsView> {
           ),
           const SizedBox(height: 12),
           Text(
-            '현재 적용 주소: ${ApiConfig.baseUrl}\nAndroid 에뮬레이터에서 PC의 로컬 Spring 서버는 보통 http://10.0.2.2:8080 입니다.',
+            '현재 적용 주소: ${ApiConfig.baseUrl}\n'
+            'Android 에뮬레이터에서 PC의 로컬 Spring 서버를 볼 때는 보통 http://10.0.2.2:8080 을 사용합니다.',
             style: const TextStyle(
               fontSize: 13,
               color: Colors.grey,

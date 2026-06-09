@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -6,162 +5,162 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'token_storage.dart';
 
-/// 화면에서 적절한 실패 메시지를 보여줄 수 있도록 API 오류를 분류한다.
 enum ApiExceptionKind {
-  connection,
-  loginRequired,
+  network,
+  unauthorized,
   notFound,
-  validation,
   server,
   invalidResponse,
   unknown,
 }
 
-/// HTTP 상태 코드와 화면 표시용 오류 분류를 함께 담는 예외이다.
 class ApiException implements Exception {
-  const ApiException(
-    this.message, {
-    this.statusCode,
-    this.kind = ApiExceptionKind.unknown,
-  });
+  const ApiException(this.message, {this.kind = ApiExceptionKind.unknown});
 
   final String message;
-  final int? statusCode;
   final ApiExceptionKind kind;
 
   @override
-  String toString() => statusCode == null ? message : '$message ($statusCode)';
+  String toString() => message;
 }
 
-/// Spring API 호출, JWT 헤더 추가, 응답 파싱을 처리한다.
+/// Spring Boot API 호출을 담당하는 공통 HTTP 클라이언트다.
 class ApiClient {
-  ApiClient({TokenStorage? tokenStorage})
-    : _tokenStorage = tokenStorage ?? TokenStorage();
+  ApiClient({http.Client? httpClient, TokenStorage? tokenStorage})
+      : _httpClient = httpClient ?? http.Client(),
+        _tokenStorage = tokenStorage ?? TokenStorage();
 
-  static const Duration _timeout = Duration(seconds: 10);
-
+  final http.Client _httpClient;
   final TokenStorage _tokenStorage;
 
-  /// JSON GET 요청을 보내고 파싱된 응답을 반환한다.
-  Future<dynamic> getJson(String path, {bool authorized = false}) async {
-    return _send(
-      () async => http.get(
-        ApiConfig.uri(path),
-        headers: await _headers(authorized: authorized),
-      ),
-    );
+  Future<dynamic> getJson(String path) async {
+    return _sendJson(() async {
+      return _httpClient.get(ApiConfig.uri(path), headers: await _headers());
+    });
   }
 
-  /// JSON POST 요청을 보내고 파싱된 응답을 반환한다.
-  Future<dynamic> postJson(
-    String path,
-    Map<String, dynamic> body, {
-    bool authorized = false,
-  }) async {
-    return _send(
-      () async => http.post(
+  Future<dynamic> postJson(String path, Map<String, dynamic> body) async {
+    return _sendJson(() async {
+      return _httpClient.post(
         ApiConfig.uri(path),
-        headers: await _headers(authorized: authorized),
+        headers: await _headers(jsonBody: true),
         body: jsonEncode(body),
-      ),
-    );
+      );
+    });
   }
 
-  /// JSON PUT 요청을 보내고 파싱된 응답을 반환한다.
-  Future<dynamic> putJson(
-    String path,
-    Map<String, dynamic> body, {
-    bool authorized = false,
-  }) async {
-    return _send(
-      () async => http.put(
+  Future<dynamic> putJson(String path, Map<String, dynamic> body) async {
+    return _sendJson(() async {
+      return _httpClient.put(
         ApiConfig.uri(path),
-        headers: await _headers(authorized: authorized),
+        headers: await _headers(jsonBody: true),
         body: jsonEncode(body),
-      ),
-    );
+      );
+    });
   }
 
-  /// form-urlencoded POST 요청을 보낸다.
-  Future<dynamic> postForm(String path, Map<String, String> body) async {
-    return _send(() async => http.post(ApiConfig.uri(path), body: body));
+  Future<dynamic> postForm(String path, Map<String, String> fields) async {
+    return _sendJson(() async {
+      return _httpClient.post(
+        ApiConfig.uri(path),
+        headers: await _headers(),
+        body: fields,
+      );
+    });
   }
 
-  /// 공통 timeout, 연결 실패, 서버 오류 처리를 적용한다.
-  Future<dynamic> _send(Future<http.Response> Function() request) async {
+  Future<dynamic> postMultipart({
+    required String path,
+    required String fileFieldName,
+    required String filePath,
+    Map<String, String> fields = const {},
+  }) async {
     try {
-      final response = await request().timeout(_timeout);
-      return _decode(response);
+      final request = http.MultipartRequest('POST', ApiConfig.uri(path));
+      request.headers.addAll(await _headers());
+      request.fields.addAll(fields);
+      request.files.add(await http.MultipartFile.fromPath(fileFieldName, filePath));
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      return _parseResponse(response);
     } on ApiException {
       rethrow;
-    } on TimeoutException {
-      throw const ApiException(
-        'Server response timed out.',
-        kind: ApiExceptionKind.connection,
-      );
-    } on http.ClientException catch (e) {
-      throw ApiException(
-        e.message.isEmpty ? 'Could not connect to server.' : e.message,
-        kind: ApiExceptionKind.connection,
-      );
     } catch (e) {
-      throw ApiException(e.toString(), kind: ApiExceptionKind.unknown);
+      throw ApiException(
+        '서버에 연결할 수 없습니다. 주소와 네트워크 상태를 확인해 주세요. ($e)',
+        kind: ApiExceptionKind.network,
+      );
     }
   }
 
-  /// 보호된 요청에 저장된 JWT 토큰을 Authorization 헤더로 추가한다.
-  Future<Map<String, String>> _headers({required bool authorized}) async {
-    final headers = <String, String>{'Content-Type': 'application/json'};
-    if (authorized) {
-      final token = await _tokenStorage.readToken();
-      if (token == null || token.isEmpty) {
-        throw const ApiException(
-          'Login token is missing.',
-          kind: ApiExceptionKind.loginRequired,
-        );
-      }
+  Future<Map<String, String>> _headers({bool jsonBody = false}) async {
+    final headers = <String, String>{};
+    final token = await _tokenStorage.readToken();
+    if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
+    }
+    if (jsonBody) {
+      headers['Content-Type'] = 'application/json';
     }
     return headers;
   }
 
-  /// HTTP 성공 여부를 확인하고 JSON 또는 일반 텍스트 응답을 파싱한다.
-  dynamic _decode(http.Response response) {
-    if (response.statusCode == 204 || response.bodyBytes.isEmpty) {
-      return null;
-    }
-
-    final decodedBody = utf8.decode(response.bodyBytes);
-    final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
-    if (!isSuccess) {
-      throw ApiException(
-        decodedBody.isEmpty ? 'Server request failed.' : decodedBody,
-        statusCode: response.statusCode,
-        kind: _kindForStatus(response.statusCode),
-      );
-    }
-
+  Future<dynamic> _sendJson(Future<http.Response> Function() request) async {
     try {
-      return jsonDecode(decodedBody);
-    } on FormatException {
-      return decodedBody;
+      final response = await request();
+      return _parseResponse(response);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        '서버에 연결할 수 없습니다. 주소와 네트워크 상태를 확인해 주세요. ($e)',
+        kind: ApiExceptionKind.network,
+      );
     }
   }
 
-  /// HTTP 상태 코드를 화면 표시용 오류 분류로 변환한다.
-  ApiExceptionKind _kindForStatus(int statusCode) {
-    if (statusCode == 401 || statusCode == 403) {
-      return ApiExceptionKind.loginRequired;
+  dynamic _parseResponse(http.Response response) {
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      throw const ApiException('로그인이 필요합니다.', kind: ApiExceptionKind.unauthorized);
     }
-    if (statusCode == 404) {
-      return ApiExceptionKind.notFound;
+    if (response.statusCode == 404) {
+      throw const ApiException('요청한 데이터를 찾을 수 없습니다.', kind: ApiExceptionKind.notFound);
     }
-    if (statusCode == 400 || statusCode == 422) {
-      return ApiExceptionKind.validation;
+    if (response.statusCode >= 500) {
+      throw ApiException(
+        '서버 오류가 발생했습니다. (${response.statusCode})',
+        kind: ApiExceptionKind.server,
+      );
     }
-    if (statusCode >= 500) {
-      return ApiExceptionKind.server;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        _extractErrorMessage(response),
+        kind: ApiExceptionKind.unknown,
+      );
     }
-    return ApiExceptionKind.unknown;
+    if (response.body.trim().isEmpty) return null;
+    try {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } catch (_) {
+      throw const ApiException(
+        '서버 응답 형식이 올바르지 않습니다.',
+        kind: ApiExceptionKind.invalidResponse,
+      );
+    }
+  }
+
+  String _extractErrorMessage(http.Response response) {
+    try {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is Map<String, dynamic>) {
+        return decoded['message']?.toString() ??
+            decoded['error']?.toString() ??
+            '요청 처리에 실패했습니다. (${response.statusCode})';
+      }
+    } catch (_) {
+      // JSON 오류 응답이 아니면 기본 메시지를 사용한다.
+    }
+    return '요청 처리에 실패했습니다. (${response.statusCode})';
   }
 }

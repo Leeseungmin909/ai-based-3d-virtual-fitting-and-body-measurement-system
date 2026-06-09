@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// JWT 토큰을 로컬 저장소에 저장하고 읽는다.
+/// Spring 로그인 API에서 받은 JWT를 로컬 저장소에 보관한다.
 class TokenStorage {
   static const _tokenKey = 'jwt_token';
 

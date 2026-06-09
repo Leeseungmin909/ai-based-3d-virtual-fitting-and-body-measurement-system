@@ -1,43 +1,48 @@
 import '../../../core/services/api_client.dart';
 import '../models/fitting_history_item.dart';
+import '../models/fitting_result.dart';
 
-/// 피팅 기록 조회와 피팅 요청 생성 API를 감싼다.
+/// 피팅 기록 생성, 목록 조회, 상태/결과 조회를 담당한다.
 class FittingService {
-  FittingService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+  FittingService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
-  /// 현재 로그인한 사용자의 피팅 기록을 조회한다.
-  Future<List<FittingHistoryItem>> fetchHistory() async {
-    final response = await _apiClient.getJson(
-      '/api/fitting/history',
-      authorized: true,
-    );
-    if (response == null) return const [];
+  Future<FittingCreateResult> createHistory({required int clothesId}) async {
+    final response = await _apiClient.postJson('/api/fitting/history', {
+      'clothesId': clothesId,
+    });
+    if (response is! Map<String, dynamic>) {
+      throw const ApiException(
+        'Fitting create response format is invalid.',
+        kind: ApiExceptionKind.invalidResponse,
+      );
+    }
+    return FittingCreateResult.fromJson(response);
+  }
 
-    final List<dynamic> items;
-    if (response is List) {
-      items = response;
-    } else if (response is Map<String, dynamic> && response['data'] is List) {
-      items = response['data'] as List;
-    } else {
+  Future<List<FittingHistoryItem>> fetchHistory() async {
+    final response = await _apiClient.getJson('/api/fitting/history');
+    if (response is! List) {
       throw const ApiException(
         'Fitting history response format is invalid.',
         kind: ApiExceptionKind.invalidResponse,
       );
     }
-
-    return items
+    return response
         .whereType<Map<String, dynamic>>()
         .map(FittingHistoryItem.fromJson)
         .toList();
   }
 
-  /// 선택한 옷 ID로 피팅 요청 기록을 생성한다.
-  Future<void> createHistory(int clothesId) async {
-    await _apiClient.postJson('/api/fitting/history', {
-      'clothesId': clothesId,
-    }, authorized: true);
+  Future<FittingResult> fetchResult(int fittingId) async {
+    final response = await _apiClient.getJson('/api/fitting/history/$fittingId/result');
+    if (response is! Map<String, dynamic>) {
+      throw const ApiException(
+        'Fitting result response format is invalid.',
+        kind: ApiExceptionKind.invalidResponse,
+      );
+    }
+    return FittingResult.fromJson(response);
   }
 }

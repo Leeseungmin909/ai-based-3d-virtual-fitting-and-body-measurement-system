@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../core/errors/ui_error_messages.dart';
 import '../models/fitting_history_item.dart';
 import '../services/fitting_service.dart';
+import 'fitting_result_view.dart';
 
-/// Spring API에서 조회한 피팅 기록을 보여준다.
+/// 사용자의 피팅 요청 기록을 보여준다.
 class FittingHistoryView extends StatefulWidget {
   const FittingHistoryView({super.key});
 
@@ -26,6 +27,15 @@ class _FittingHistoryViewState extends State<FittingHistoryView> {
     setState(() => _futureHistory = _fittingService.fetchHistory());
   }
 
+  void _openResult(FittingHistoryItem item) {
+    final id = item.id;
+    if (id == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => FittingResultView(fittingId: id)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,10 +46,11 @@ class _FittingHistoryViewState extends State<FittingHistoryView> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (snapshot.hasError) {
-            return _HistoryMessage(
+            return _MessageState(
               icon: Icons.cloud_off_outlined,
-              title: '피팅 기록을 불러올 수 없습니다',
+              title: '피팅 기록을 불러오지 못했습니다.',
               message: UiErrorMessages.loadFittingHistory(snapshot.error!),
               actionLabel: '다시 시도',
               onAction: _reloadHistory,
@@ -48,42 +59,31 @@ class _FittingHistoryViewState extends State<FittingHistoryView> {
 
           final history = snapshot.data ?? const <FittingHistoryItem>[];
           if (history.isEmpty) {
-            return const _HistoryMessage(
+            return const _MessageState(
               icon: Icons.history_outlined,
-              title: '피팅 기록이 없습니다',
-              message: '옷을 선택하고 피팅 요청을 만들면 이곳에 기록됩니다.',
+              title: '피팅 기록이 없습니다.',
+              message: '옷을 선택하고 피팅 요청을 먼저 생성해 주세요.',
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: history.length,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              final item = history[index];
-              return ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.checkroom, color: Colors.deepPurple),
-                ),
-                title: Text(
-                  item.clothesName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(item.createdAt ?? '생성 일시 없음'),
-                trailing: Text(
-                  item.status,
-                  style: const TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              );
-            },
+          return RefreshIndicator(
+            onRefresh: () async => _reloadHistory(),
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: history.length,
+              separatorBuilder: (context, separatorIndex) => const Divider(),
+              itemBuilder: (context, index) {
+                final item = history[index];
+                final createdAt = item.createdAt ?? '날짜 없음';
+                return ListTile(
+                  leading: const Icon(Icons.checkroom_outlined),
+                  title: Text(item.clothesName),
+                  subtitle: Text('${item.status} · $createdAt'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _openResult(item),
+                );
+              },
+            ),
           );
         },
       ),
@@ -91,9 +91,8 @@ class _FittingHistoryViewState extends State<FittingHistoryView> {
   }
 }
 
-/// 피팅 기록 화면의 빈 목록 또는 오류 상태를 보여준다.
-class _HistoryMessage extends StatelessWidget {
-  const _HistoryMessage({
+class _MessageState extends StatelessWidget {
+  const _MessageState({
     required this.icon,
     required this.title,
     required this.message,
@@ -115,19 +114,11 @@ class _HistoryMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: Colors.grey),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Icon(icon, size: 56, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey, height: 1.4),
-            ),
+            Text(message, textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 16),
               OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),

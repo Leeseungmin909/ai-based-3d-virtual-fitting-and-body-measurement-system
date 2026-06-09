@@ -6,7 +6,7 @@ import '../../fitting/screens/fitting_view.dart';
 import '../models/clothes.dart';
 import '../services/clothes_service.dart';
 
-/// 서버에서 불러온 옷 목록을 보여주고 피팅 요청 화면으로 이동한다.
+/// Spring에서 옷 목록을 불러오고 선택한 옷을 피팅 화면으로 넘긴다.
 class ClothingSelectView extends StatefulWidget {
   const ClothingSelectView({super.key});
 
@@ -17,8 +17,6 @@ class ClothingSelectView extends StatefulWidget {
 class _ClothingSelectViewState extends State<ClothingSelectView> {
   final ClothesService _clothesService = ClothesService();
   late Future<List<Clothes>> _futureClothes;
-  String _selectedCategory = 'ALL';
-  final List<String> _categories = const ['ALL', 'TOP', 'BOTTOM'];
 
   @override
   void initState() {
@@ -26,166 +24,130 @@ class _ClothingSelectViewState extends State<ClothingSelectView> {
     _futureClothes = _clothesService.fetchClothes();
   }
 
-  void _reloadClothes() {
+  void _reload() {
     setState(() => _futureClothes = _clothesService.fetchClothes());
+  }
+
+  void _openFitting(Clothes clothes) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => FittingView(clothes: clothes)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('옷 목록 및 피팅')),
-      body: Column(
-        children: [
-          SizedBox(
-            height: 58,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                return ChoiceChip(
-                  label: Text(category),
-                  selected: _selectedCategory == category,
-                  selectedColor: Colors.black,
-                  backgroundColor: Colors.grey[100],
-                  showCheckmark: false,
-                  labelStyle: TextStyle(
-                    color: _selectedCategory == category
-                        ? Colors.white
-                        : Colors.black87,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  onSelected: (selected) {
-                    if (selected) setState(() => _selectedCategory = category);
-                  },
-                );
-              },
+      appBar: AppBar(title: const Text('옷 선택')),
+      body: FutureBuilder<List<Clothes>>(
+        future: _futureClothes,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return _MessageState(
+              icon: Icons.cloud_off_outlined,
+              title: '옷 목록을 불러오지 못했습니다.',
+              message: UiErrorMessages.loadClothes(snapshot.error!),
+              actionLabel: '다시 시도',
+              onAction: _reload,
+            );
+          }
+          final clothes = snapshot.data ?? const <Clothes>[];
+          if (clothes.isEmpty) {
+            return const _MessageState(
+              icon: Icons.checkroom_outlined,
+              title: '등록된 옷이 없습니다.',
+              message: 'Spring DB에 옷 데이터를 먼저 등록해 주세요.',
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: clothes.length,
+            separatorBuilder: (context, separatorIndex) => const SizedBox(height: 12),
+            itemBuilder: (context, index) => _ClothesCard(
+              clothes: clothes[index],
+              onTap: () => _openFitting(clothes[index]),
             ),
-          ),
-          Expanded(
-            child: FutureBuilder<List<Clothes>>(
-              future: _futureClothes,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return _MessageState(
-                    icon: Icons.cloud_off_outlined,
-                    title: '옷 목록을 불러올 수 없습니다',
-                    message: UiErrorMessages.loadClothes(snapshot.error!),
-                    actionLabel: '다시 시도',
-                    onAction: _reloadClothes,
-                  );
-                }
-
-                final allClothes = snapshot.data ?? const <Clothes>[];
-                final clothes = _selectedCategory == 'ALL'
-                    ? allClothes
-                    : allClothes
-                          .where((item) => item.category == _selectedCategory)
-                          .toList();
-
-                if (allClothes.isEmpty) {
-                  return const _MessageState(
-                    icon: Icons.checkroom_outlined,
-                    title: '등록된 옷이 없습니다',
-                    message: '서버 DB의 clothes 테이블에 옷 데이터를 먼저 추가해 주세요.',
-                  );
-                }
-
-                if (clothes.isEmpty) {
-                  return _MessageState(
-                    icon: Icons.filter_alt_off_outlined,
-                    title: '해당 카테고리에 옷이 없습니다',
-                    message: '$_selectedCategory 카테고리에 표시할 옷 데이터가 없습니다.',
-                  );
-                }
-
-                return GridView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.56,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 20,
-                  ),
-                  itemCount: clothes.length,
-                  itemBuilder: (context, index) =>
-                      _ClothesTile(clothes: clothes[index]),
-                );
-              },
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
-/// 옷 한 개를 선택 가능한 카드로 렌더링한다.
-class _ClothesTile extends StatelessWidget {
-  const _ClothesTile({required this.clothes});
+class _ClothesCard extends StatelessWidget {
+  const _ClothesCard({required this.clothes, required this.onTap});
 
   final Clothes clothes;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => FittingView(selectedClothes: clothes),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: double.infinity,
-                color: Colors.grey[100],
-                child: clothes.imageUrl.isEmpty
-                    ? const Icon(Icons.image_not_supported, color: Colors.grey)
-                    : Image.network(
-                        ApiConfig.fileUrl(clothes.imageUrl),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.broken_image, color: Colors.grey),
+    final imageUrl = ApiConfig.fileUrl(clothes.imageUrl);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 108,
+              height: 108,
+              child: imageUrl.isEmpty
+                  ? const ColoredBox(
+                      color: Color(0xFFEFEFEF),
+                      child: Icon(Icons.image_not_supported_outlined),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const ColoredBox(
+                        color: Color(0xFFEFEFEF),
+                        child: Icon(Icons.broken_image_outlined),
                       ),
+                    ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      clothes.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      clothes.category,
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '가슴 ${_cm(clothes.chestWidthCm)} · 총장 ${_cm(clothes.totalLengthCm)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            clothes.category,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(Icons.chevron_right),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            clothes.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  String _cm(double? value) => value == null ? '-' : '${value.toStringAsFixed(1)}cm';
 }
 
-/// 옷 목록 화면의 로딩, 빈 목록, 오류 상태를 표시한다.
 class _MessageState extends StatelessWidget {
   const _MessageState({
     required this.icon,
@@ -209,19 +171,11 @@ class _MessageState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: Colors.grey),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Icon(icon, size: 56, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey, height: 1.4),
-            ),
+            Text(message, textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 16),
               OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),

@@ -1,4 +1,4 @@
-/// Spring 옷 응답을 파싱한 뒤 UI에서 사용하는 모델이다.
+/// Spring 옷 응답을 Flutter UI에서 쓰기 쉬운 형태로 바꾸는 모델이다.
 class Clothes {
   const Clothes({
     required this.id,
@@ -37,63 +37,17 @@ class Clothes {
       id: _asInt(json['id']),
       name: json['name']?.toString() ?? '이름 없음',
       category: json['category']?.toString().toUpperCase() ?? 'UNKNOWN',
-      imageUrl:
-          json['imageUrl']?.toString() ?? json['image_url']?.toString() ?? '',
-      base3dUrl:
-          json['base3dUrl']?.toString() ??
-          json['base_3d_url']?.toString() ??
-          '',
-      totalLengthCm: _asDouble(
-        json['totalLengthCm'] ??
-            json['total_length_cm'] ??
-            json['totalLength'] ??
-            json['total_length'],
-      ),
-      shoulderWidthCm: _asDouble(
-        json['shoulderWidthCm'] ??
-            json['shoulder_width_cm'] ??
-            json['shoulderWidth'] ??
-            json['shoulder_width'],
-      ),
-      chestWidthCm: _asDouble(
-        json['chestWidthCm'] ??
-            json['chest_width_cm'] ??
-            json['chestWidth'] ??
-            json['chest_width'],
-      ),
-      sleeveLengthCm: _asDouble(
-        json['sleeveLengthCm'] ??
-            json['sleeve_length_cm'] ??
-            json['sleeveLength'] ??
-            json['sleeve_length'],
-      ),
-      waistWidthCm: _asDouble(
-        json['waistWidthCm'] ??
-            json['waist_width_cm'] ??
-            json['waistWidth'] ??
-            json['waist_width'],
-      ),
-      hipWidthCm: _asDouble(
-        json['hipWidthCm'] ??
-            json['hip_width_cm'] ??
-            json['hipWidth'] ??
-            json['hip_width'],
-      ),
-      thighWidthCm: _asDouble(
-        json['thighWidthCm'] ??
-            json['thigh_width_cm'] ??
-            json['thighWidth'] ??
-            json['thigh_width'],
-      ),
-      crotchCm: _asDouble(
-        json['crotchCm'] ?? json['crotch_cm'] ?? json['crotch'],
-      ),
-      hemWidthCm: _asDouble(
-        json['hemWidthCm'] ??
-            json['hem_width_cm'] ??
-            json['hemWidth'] ??
-            json['hem_width'],
-      ),
+      imageUrl: json['imageUrl']?.toString() ?? json['image_url']?.toString() ?? '',
+      base3dUrl: json['base3dUrl']?.toString() ?? json['base_3d_url']?.toString() ?? '',
+      totalLengthCm: _asDouble(json['totalLengthCm'] ?? json['total_length_cm']),
+      shoulderWidthCm: _asDouble(json['shoulderWidthCm'] ?? json['shoulder_width_cm']),
+      chestWidthCm: _asDouble(json['chestWidthCm'] ?? json['chest_width_cm']),
+      sleeveLengthCm: _asDouble(json['sleeveLengthCm'] ?? json['sleeve_length_cm']),
+      waistWidthCm: _asDouble(json['waistWidthCm'] ?? json['waist_width_cm']),
+      hipWidthCm: _asDouble(json['hipWidthCm'] ?? json['hip_width_cm']),
+      thighWidthCm: _asDouble(json['thighWidthCm'] ?? json['thigh_width_cm']),
+      crotchCm: _asDouble(json['crotchCm'] ?? json['crotch_cm']),
+      hemWidthCm: _asDouble(json['hemWidthCm'] ?? json['hem_width_cm']),
     );
   }
 

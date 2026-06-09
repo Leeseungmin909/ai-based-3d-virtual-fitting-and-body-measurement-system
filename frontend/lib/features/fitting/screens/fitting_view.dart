@@ -1,53 +1,67 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/config/api_config.dart';
 import '../../../core/errors/ui_error_messages.dart';
 import '../../../core/state/user_profile_store.dart';
 import '../../clothes/models/clothes.dart';
 import '../services/fitting_service.dart';
+import 'fitting_result_view.dart';
 
-/// 선택한 옷의 치수를 보여주고 피팅 요청을 생성한다.
+/// 선택한 옷을 기준으로 피팅 요청을 생성하는 화면이다.
 class FittingView extends StatefulWidget {
-  const FittingView({super.key, required this.selectedClothes});
+  const FittingView({super.key, required this.clothes});
 
-  final Clothes selectedClothes;
+  final Clothes clothes;
 
   @override
   State<FittingView> createState() => _FittingViewState();
 }
 
 class _FittingViewState extends State<FittingView> {
-  final FittingService _fittingService = FittingService();
   final UserProfileStore _profileStore = UserProfileStore();
-  bool _isSubmitting = false;
+  final FittingService _fittingService = FittingService();
 
-  Future<void> _startFitting() async {
-    final profile = await _profileStore.load();
-    if (!mounted) return;
+  late Future<UserProfile> _profileFuture;
+  bool _isCreating = false;
 
-    if (!profile.hasAvatar) {
-      _showError('먼저 3D 모델을 생성해 주세요.');
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _profileStore.load();
+  }
+
+  Future<void> _createFitting(UserProfile profile) async {
+    if (!profile.hasHeight) {
+      _showError('피팅 전에 키를 먼저 입력해 주세요.');
       return;
     }
-
-    final id = widget.selectedClothes.id;
-    if (id == null) {
+    if (!profile.hasSourceImage) {
+      _showError('피팅 전에 전신 사진 1장을 먼저 등록해 주세요.');
+      return;
+    }
+    final clothesId = widget.clothes.id;
+    if (clothesId == null) {
       _showError('옷 ID가 없어 피팅 요청을 만들 수 없습니다.');
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    setState(() => _isCreating = true);
     try {
-      await _fittingService.createHistory(id);
+      final created = await _fittingService.createHistory(clothesId: clothesId);
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      final fittingId = created.fittingId;
+      if (fittingId == null) {
+        _showError('피팅 기록 ID가 응답에 없습니다.');
+        return;
+      }
+      Navigator.push(
         context,
-      ).showSnackBar(const SnackBar(content: Text('피팅 요청이 저장되었습니다.')));
+        MaterialPageRoute(builder: (_) => FittingResultView(fittingId: fittingId)),
+      );
     } catch (e) {
       if (!mounted) return;
       _showError(UiErrorMessages.createFitting(e));
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) setState(() => _isCreating = false);
     }
   }
 
@@ -59,96 +73,96 @@ class _FittingViewState extends State<FittingView> {
 
   @override
   Widget build(BuildContext context) {
-    final clothes = widget.selectedClothes;
+    final clothes = widget.clothes;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('옷 상세 정보')),
-      body: Column(
-        children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              color: Colors.grey[50],
-              child: clothes.imageUrl.isEmpty
-                  ? const Icon(
-                      Icons.image_not_supported,
-                      size: 80,
-                      color: Colors.grey,
-                    )
-                  : Image.network(
-                      ApiConfig.fileUrl(clothes.imageUrl),
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.broken_image,
-                        size: 80,
-                        color: Colors.grey,
-                      ),
-                    ),
-            ),
-          ),
-          Container(
+      appBar: AppBar(title: const Text('피팅 요청')),
+      body: FutureBuilder<UserProfile>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          final profile = snapshot.data ?? const UserProfile();
+          return ListView(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
+            children: [
+              Text(
+                clothes.name,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
+              const SizedBox(height: 8),
+              Text(
+                clothes.category,
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
+              const SizedBox(height: 24),
+              _ChecklistTile(
+                checked: profile.hasHeight,
+                title: '키 입력',
+                subtitle: profile.heightCm == null
+                    ? '마이페이지에서 키를 입력해야 합니다.'
+                    : '${profile.heightCm!.toStringAsFixed(1)} cm',
+              ),
+              _ChecklistTile(
+                checked: profile.hasSourceImage,
+                title: '전신 사진 등록',
+                subtitle: profile.hasSourceImage
+                    ? '사진이 등록되어 있습니다.'
+                    : '사진 기반 AI 처리를 위해 전신 사진이 필요합니다.',
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                '옷 치수',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              _DimensionRow(label: '총장', value: clothes.totalLengthCm),
+              _DimensionRow(label: '어깨너비', value: clothes.shoulderWidthCm),
+              _DimensionRow(label: '가슴너비', value: clothes.chestWidthCm),
+              _DimensionRow(label: '소매길이', value: clothes.sleeveLengthCm),
+              _DimensionRow(label: '허리너비', value: clothes.waistWidthCm),
+              _DimensionRow(label: '엉덩이너비', value: clothes.hipWidthCm),
+              _DimensionRow(label: '허벅지너비', value: clothes.thighWidthCm),
+              _DimensionRow(label: '밑위', value: clothes.crotchCm),
+              const SizedBox(height: 28),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isCreating ? null : () => _createFitting(profile),
+                  child: Text(_isCreating ? '요청 생성 중...' : '피팅 요청 생성'),
                 ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  clothes.category,
-                  style: const TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  clothes.name,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _DimensionRow(label: '총장', value: clothes.totalLengthCm),
-                _DimensionRow(label: '어깨너비', value: clothes.shoulderWidthCm),
-                _DimensionRow(label: '가슴너비', value: clothes.chestWidthCm),
-                _DimensionRow(label: '소매길이', value: clothes.sleeveLengthCm),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _startFitting,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(_isSubmitting ? '요청 중...' : '피팅 요청하기'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-/// 옷 치수 한 항목을 라벨과 값 형태로 표시한다.
+class _ChecklistTile extends StatelessWidget {
+  const _ChecklistTile({
+    required this.checked,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final bool checked;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        checked ? Icons.check_circle : Icons.error_outline,
+        color: checked ? Colors.green : Colors.orange,
+      ),
+      title: Text(title),
+      subtitle: Text(subtitle),
+    );
+  }
+}
+
 class _DimensionRow extends StatelessWidget {
   const _DimensionRow({required this.label, required this.value});
 
@@ -157,14 +171,13 @@ class _DimensionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (value == null) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(Icons.straighten, color: Colors.grey, size: 18),
-          const SizedBox(width: 8),
-          Text('$label: ${value!.toStringAsFixed(1)}cm'),
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value == null ? '-' : '${value!.toStringAsFixed(1)} cm'),
         ],
       ),
     );
