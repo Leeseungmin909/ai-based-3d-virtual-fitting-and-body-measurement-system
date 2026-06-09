@@ -27,6 +27,10 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
+    /** BCrypt 해시 비밀번호. 기존 mock(Google) 사용자는 null일 수 있다. */
+    @Column(length = 100)
+    private String password;
+
     @Column(name = "height_cm")
     private Double heightCm;
 }
