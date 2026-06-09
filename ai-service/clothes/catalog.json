@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "top_001",
+      "category": "top",
+      "model": "top/top_001/model.glb",
+      "image": "top/top_001/thumbnail.jpg",
+      "legacy_filename": "Meshy_AI_1989_Standard_Black_C_0510145916_generate.glb"
+    },
+    {
+      "id": "top_002",
+      "category": "top",
+      "model": "top/top_002/model.glb",
+      "image": "top/top_002/thumbnail.jpg",
+      "legacy_filename": "Meshy_AI_Black_Polo_Shirt_0525072525_generate.glb"
+    },
+    {
+      "id": "top_003",
+      "category": "top",
+      "model": "top/top_003/model.glb",
+      "image": "top/top_003/thumbnail.jpg",
+      "legacy_filename": "Meshy_AI_Dark_Brown_Knit_Henle_0510145721_generate.glb"
+    },
+    {
+      "id": "bottom_001",
+      "category": "bottom",
+      "model": "bottom/bottom_001/model.glb",
+      "image": "bottom/bottom_001/thumbnail.jpg",
+      "legacy_filename": "Meshy_AI_Black_Cargo_Shorts_0510150330_generate.glb"
+    },
+    {
+      "id": "bottom_002",
+      "category": "bottom",
+      "model": "bottom/bottom_002/model.glb",
+      "image": "bottom/bottom_002/thumbnail.jpg",
+      "legacy_filename": "Meshy_AI_Faded_Black_Denim_Ski_0510150359_generate.glb"
+    }
+  ]
+}
