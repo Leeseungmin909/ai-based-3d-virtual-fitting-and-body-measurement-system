@@ -1,0 +1,3 @@
+# GitHub Linguist 언어 통계에서 제외할 외부(vendored) 라이브러리
+# three.js 등 번들된 3D 렌더링 라이브러리는 직접 작성한 코드가 아니므로 통계에서 제외한다.
+ai-service/static/js/** linguist-vendored
