@@ -44,4 +44,49 @@ class UserService {
     await _profileStore.saveSourceImageUrl(sourceImageUrl);
     return sourceImageUrl;
   }
+
+  /// 현재 사용자의 신체 치수를 조회한다. 측정값이 없거나 오류면 null을 반환한다.
+  Future<BodyMeasurement?> fetchMyMeasurements() async {
+    try {
+      final res = await _apiClient.getJson('/api/users/me/measurements');
+      if (res is! Map<String, dynamic>) return null;
+      return BodyMeasurement.fromJson(res);
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/// 착용 가능 여부 판단에 필요한 사용자 신체 치수다.
+class BodyMeasurement {
+  const BodyMeasurement({
+    this.shoulderWidthCm,
+    this.chestWidthCm,
+    this.waistWidthCm,
+    this.hipWidthCm,
+  });
+
+  final double? shoulderWidthCm;
+  final double? chestWidthCm;
+  final double? waistWidthCm;
+  final double? hipWidthCm;
+
+  bool get hasTopMeasurements => shoulderWidthCm != null && chestWidthCm != null;
+  bool get hasBottomMeasurements => waistWidthCm != null && hipWidthCm != null;
+
+  factory BodyMeasurement.fromJson(Map<String, dynamic> json) {
+    double? read(String a, String b) => _asDouble(json[a] ?? json[b]);
+    return BodyMeasurement(
+      shoulderWidthCm: read('shoulderWidthCm', 'shoulder_width_cm'),
+      chestWidthCm: read('chestWidthCm', 'chest_width_cm'),
+      waistWidthCm: read('waistWidthCm', 'waist_width_cm'),
+      hipWidthCm: read('hipWidthCm', 'hip_width_cm'),
+    );
+  }
+
+  static double? _asDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
 }
