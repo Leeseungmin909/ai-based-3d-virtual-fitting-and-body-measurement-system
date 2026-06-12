@@ -7,6 +7,8 @@ import kr.ac.dongeui.virtualfitting.domain.fitting.dto.FittingResultResponse;
 import kr.ac.dongeui.virtualfitting.domain.fitting.entity.FittingHistory;
 import kr.ac.dongeui.virtualfitting.domain.fitting.entity.FittingStatus;
 import kr.ac.dongeui.virtualfitting.domain.fitting.repository.FittingHistoryRepository;
+import kr.ac.dongeui.virtualfitting.domain.measurement.entity.UserMeasurement;
+import kr.ac.dongeui.virtualfitting.domain.measurement.repository.UserMeasurementRepository;
 import kr.ac.dongeui.virtualfitting.domain.user.entity.User;
 import kr.ac.dongeui.virtualfitting.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -26,15 +28,18 @@ public class FittingService {
     private final FittingHistoryRepository fittingHistoryRepository;
     private final UserRepository userRepository;
     private final ClothesRepository clothesRepository;
+    private final UserMeasurementRepository userMeasurementRepository;
     private final AiCommunicationService aiCommunicationService;
 
     public FittingService(FittingHistoryRepository fittingHistoryRepository,
                           UserRepository userRepository,
                           ClothesRepository clothesRepository,
+                          UserMeasurementRepository userMeasurementRepository,
                           AiCommunicationService aiCommunicationService) {
         this.fittingHistoryRepository = fittingHistoryRepository;
         this.userRepository = userRepository;
         this.clothesRepository = clothesRepository;
+        this.userMeasurementRepository = userMeasurementRepository;
         this.aiCommunicationService = aiCommunicationService;
     }
 
@@ -79,6 +84,9 @@ public class FittingService {
         User user = getUserByEmail(email);
         Clothes clothes = clothesRepository.findById(clothesId)
                 .orElseThrow(() -> new IllegalArgumentException("Clothes not found."));
+
+        // 옷 실측 사이즈가 사용자 체형보다 작으면 착용 불가로 판단해 요청을 막는다.
+        validateWearable(user, clothes);
 
         FittingHistory history = FittingHistory.builder()
                 .user(user)
@@ -137,5 +145,39 @@ public class FittingService {
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
+    }
+
+    /**
+     * 사용자 신체 치수와 옷 실측 사이즈를 비교해 착용 가능 여부를 검사합니다.
+     * 체형 정보가 없으면(아직 측정 전) 판단을 건너뜁니다.
+     * 상의는 어깨너비·가슴단면, 하의는 허리너비·엉덩이너비를 기준으로 비교합니다.
+     */
+    private void validateWearable(User user, Clothes clothes) {
+        UserMeasurement m = userMeasurementRepository.findByUserId(user.getId()).orElse(null);
+        if (m == null) {
+            return;
+        }
+        String category = clothes.getCategory();
+        boolean isTop = category != null && (category.equalsIgnoreCase("TOP") || category.contains("상의"));
+        boolean isBottom = category != null && (category.equalsIgnoreCase("BOTTOM") || category.contains("하의"));
+
+        if (isTop) {
+            checkDimension("어깨너비", clothes.getShoulderWidthCm(), m.getShoulderWidthCm());
+            checkDimension("가슴단면", clothes.getChestWidthCm(), m.getChestWidthCm());
+        } else if (isBottom) {
+            checkDimension("허리너비", clothes.getWaistWidthCm(), m.getWaistWidthCm());
+            checkDimension("엉덩이너비", clothes.getHipWidthCm(), m.getHipWidthCm());
+        }
+    }
+
+    /**
+     * 옷 치수가 체형 치수보다 작으면 착용 불가 예외를 던집니다.
+     */
+    private void checkDimension(String label, Double clothesCm, Double bodyCm) {
+        if (clothesCm != null && bodyCm != null && clothesCm < bodyCm) {
+            throw new IllegalArgumentException(String.format(
+                    "선택하신 옷이 회원님 체형보다 작아 착용할 수 없습니다. (%s: 옷 %.1fcm < 체형 %.1fcm)",
+                    label, clothesCm, bodyCm));
+        }
     }
 }
