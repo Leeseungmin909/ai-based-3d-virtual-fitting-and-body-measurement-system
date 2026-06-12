@@ -35,7 +35,7 @@ def _find_blender() -> str | None:
     return None
 
 
-_DECIMATE_TARGET = 15000  # 사전 데시메이션 최대 face 수
+_DECIMATE_TARGET = 15000  # 사전 데시메이션 최대 face 수 (하의용 — 셔츠는 Blender 내부 데시메이션)
 
 
 def _predecimate_glb(cloth_glb_path: str) -> str:
@@ -85,95 +85,9 @@ def _predecimate_glb(cloth_glb_path: str) -> str:
         return cloth_glb_path
 
 
-def _remove_floaters(glb_path: str) -> None:
-    """시뮬 후 흩어진 작은 분리 조각(floating noise)을 제거해 깔끔한 메시로 만든다.
-
-    AI 생성 옷 + 클로스 시뮬 과정에서 본체와 떨어진 미세 조각(보통 verts<15)이
-    발끝·바닥으로 튀어 점처럼 보인다. 전체의 1%(최소 50) 미만 조각은 버린다.
-    """
-    try:
-        import trimesh
-        m = trimesh.load(glb_path, force='mesh')
-        comps = m.split(only_watertight=False)
-        if len(comps) <= 1:
-            return
-        thr = max(50, int(0.01 * len(m.vertices)))
-        keep = [c for c in comps if len(c.vertices) >= thr]
-        if not keep or len(keep) == len(comps):
-            return
-        cleaned = trimesh.util.concatenate(keep) if len(keep) > 1 else keep[0]
-        cleaned.export(glb_path)
-        print(f"[BlenderCloth] floater 제거: {len(comps)}→{len(keep)} 조각, {len(cleaned.vertices)} verts")
-    except Exception as e:
-        print(f"[BlenderCloth] floater 제거 실패(무시): {e}")
-
-
-def _push_off_body(cloth_glb_path: str, body_glb_path: str, offset: float = 0.012) -> None:
-    """옷 버텍스를 가장 가까운 몸 버텍스 반대 방향으로 offset(m)만큼 밀어
-    몸이 옷을 뚫고 나오는 현상(poke-through)을 줄인다.
-
-    법선 방향이 아니라 '몸→옷' 방향으로 밀기 때문에 옷 법선이 꼬여 있어도 안전하다.
-    """
-    try:
-        import trimesh
-        import numpy as np
-        from scipy.spatial import cKDTree
-
-        cloth = trimesh.load(cloth_glb_path, force='mesh')
-        body = trimesh.load(body_glb_path, force='mesh')
-
-        tree = cKDTree(body.vertices)
-        _, idx = tree.query(cloth.vertices)
-        dirs = cloth.vertices - body.vertices[idx]
-        norm = np.linalg.norm(dirs, axis=1, keepdims=True)
-        norm[norm < 1e-6] = 1.0
-        cloth.vertices = cloth.vertices + (dirs / norm) * offset
-        cloth.export(cloth_glb_path)
-        print(f"[BlenderCloth] poke-through 방지: 옷을 몸 바깥 {offset*100:.1f}cm 띄움")
-    except Exception as e:
-        print(f"[BlenderCloth] push-off-body 실패(무시): {e}")
-
-
-def _dominant_color(thumb_path: str):
-    """상품 썸네일 중앙 영역에서 배경(흰색)을 제외한 대표 색(RGB)을 추출한다."""
-    import numpy as np
-    from PIL import Image
-    im = Image.open(thumb_path).convert("RGB")
-    a = np.asarray(im)
-    h, w, _ = a.shape
-    c = a[int(h * 0.3):int(h * 0.7), int(w * 0.3):int(w * 0.7)].reshape(-1, 3)
-    bright = c.mean(1)
-    sat = c.max(1).astype(int) - c.min(1).astype(int)
-    mask = ~((bright > 225) & (sat < 18))   # 밝고 무채색(흰 배경) 제거
-    g = c[mask] if mask.sum() > 50 else c
-    return tuple(int(x) for x in np.median(g, 0))
-
-
-def _apply_thumbnail_color(glb_path: str, source_cloth_path: str) -> None:
-    """옷 썸네일(상품 사진)의 대표 색을 피팅된 옷 메시에 균일하게 입힌다.
-
-    옷 3D 모델에 색·텍스처·UV가 없어 흰색으로 렌더되는 문제를 보정한다.
-    질감(프린트)은 UV가 없어 적용 불가하므로 단색만 입힌다.
-    """
-    try:
-        import os
-        import numpy as np
-        import trimesh
-        thumb = os.path.join(os.path.dirname(source_cloth_path), "thumbnail.jpg")
-        if not os.path.exists(thumb):
-            return
-        r, g, b = _dominant_color(thumb)
-        m = trimesh.load(glb_path, force="mesh")
-        vc = np.tile(np.array([r, g, b, 255], np.uint8), (len(m.vertices), 1))
-        m.visual = trimesh.visual.ColorVisuals(m, vertex_colors=vc)
-        m.export(glb_path)
-        print(f"[BlenderCloth] 옷 색 적용: #{r:02X}{g:02X}{b:02X} ({os.path.basename(os.path.dirname(source_cloth_path))})")
-    except Exception as e:
-        print(f"[BlenderCloth] 옷 색 적용 실패(무시): {e}")
-
-
 def _transfer_deformation(proxy_orig_path: str, proxy_def_path: str,
-                           shirt_orig_path: str, out_path: str) -> None:
+                           shirt_orig_path: str, out_path: str,
+                           max_residual: float = 0.25) -> None:
     """
     pygltflib로 GLB 바이너리를 직접 패치: POSITION만 수정, NORMAL은 원본 유지.
 
@@ -194,7 +108,7 @@ def _transfer_deformation(proxy_orig_path: str, proxy_def_path: str,
 
     # 전체 평균 변위 (translation 성분) — residual 클램프 기준
     mean_disp = disp.mean(axis=0)                      # (3,)
-    MAX_RESIDUAL = 0.25                                # 25cm 이상 local 변형은 클램프
+    MAX_RESIDUAL = max_residual                        # 이 이상 local 변형은 클램프 (셔츠는 소매 드레이프 때문에 크게)
 
     # ── 프록시를 앞면(Z≥0) / 뒷면(Z<0) 으로 분리 ─────────────────────────
     fm = pre_verts[:, 2] >= 0
@@ -324,7 +238,12 @@ def fit_cloth_blender(cloth_glb_path: str, body_glb_path: str,
         print(f"[BlenderCloth] 스크립트 없음: {script}")
         return cloth_glb_path
 
-    decimated_path = _predecimate_glb(os.path.abspath(cloth_glb_path))
+    # 셔츠: pymeshlab(OBJ 경유)은 UV·텍스처를 잃음 → 원본 그대로 Blender에 넘기고
+    #       Blender 내부 Decimate(UV 보존)로 줄임. 하의는 기존 경로 유지(IDW용 프록시).
+    if cloth_type == 'shirt':
+        decimated_path = os.path.abspath(cloth_glb_path)
+    else:
+        decimated_path = _predecimate_glb(os.path.abspath(cloth_glb_path))
     tmp_created = decimated_path != os.path.abspath(cloth_glb_path)
 
     # SMPL-X 측정값 → 임시 JSON 파일 (Blender 스크립트에 전달)
@@ -361,7 +280,7 @@ def fit_cloth_blender(cloth_glb_path: str, body_glb_path: str,
                 cmd,
                 stdout=_log_f,
                 stderr=subprocess.STDOUT,
-                timeout=600,
+                timeout=900,   # Surface Deform 바인딩(hi-res) 시간 여유
                 cwd=os.path.abspath("."),
             )
 
@@ -371,17 +290,15 @@ def fit_cloth_blender(cloth_glb_path: str, body_glb_path: str,
             return cloth_glb_path
 
         if os.path.exists(output_path) and result.returncode == 0:
-            # 모바일 뷰어(model-viewer)는 고폴리곤 메시를 로드하지 못하므로
-            # 상·하의 모두 경량 프록시 시뮬 결과(약 15k face)를 그대로 사용한다.
-            # (이전: 하의를 원본 고품질 메시로 IDW 전달 → 85MB/319만 버텍스 → 폰 로드 불가)
-            # 고품질이 필요하면 _transfer_deformation을 다시 호출하되 결과를 데시메이션할 것.
-            # 흩어진 미세 조각(발끝·바닥으로 튄 점) 제거
-            _remove_floaters(output_path)
-            # 몸이 옷을 뚫고 나오는 현상 방지 (하의만; 상의는 띄우면 부자연스러워 원복)
-            if cloth_type != 'shirt':
-                _push_off_body(output_path, os.path.abspath(body_glb_path))
-            # 옷 썸네일 대표 색을 입힘 (모델에 색이 없어 흰색으로 나오는 문제 보정)
-            _apply_thumbnail_color(output_path, cloth_glb_path)
+            # 셔츠: Blender가 Surface Deform으로 hi-res를 직접 출력 → IDW 불필요.
+            # 하의: 원본 고품질 메쉬에 변형 전달(IDW).
+            if tmp_created and cloth_type != 'shirt':
+                _transfer_deformation(
+                    proxy_orig_path=decimated_path,
+                    proxy_def_path=output_path,
+                    shirt_orig_path=os.path.abspath(cloth_glb_path),
+                    out_path=output_path,
+                )
             # 임시 파일 정리
             for _suf in ('_pre.npy', '_post.npy', '_disp.npy', '_faces.npy'):
                 _p = output_path.replace('.glb', _suf)
