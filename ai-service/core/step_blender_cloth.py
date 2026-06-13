@@ -219,6 +219,44 @@ def _transfer_deformation(proxy_orig_path: str, proxy_def_path: str,
     print(f"[BlenderCloth] IDW transfer: {total_verts} verts → {out_path} ({kb}KB)")
 
 
+def _dominant_color(thumb_path: str):
+    """상품 썸네일 중앙 영역에서 배경(흰색)을 제외한 대표 색(RGB)을 추출한다."""
+    import numpy as np
+    from PIL import Image
+    im = Image.open(thumb_path).convert("RGB")
+    a = np.asarray(im)
+    h, w, _ = a.shape
+    c = a[int(h * 0.3):int(h * 0.7), int(w * 0.3):int(w * 0.7)].reshape(-1, 3)
+    bright = c.mean(1)
+    sat = c.max(1).astype(int) - c.min(1).astype(int)
+    mask = ~((bright > 225) & (sat < 18))   # 밝고 무채색(흰 배경) 제거
+    g = c[mask] if mask.sum() > 50 else c
+    return tuple(int(x) for x in np.median(g, 0))
+
+
+def _apply_thumbnail_color(glb_path: str, source_cloth_path: str) -> None:
+    """옷 썸네일(상품 사진)의 대표 색을 피팅된 옷 메시에 균일하게 입힌다.
+
+    옷 3D 모델에 색·텍스처·UV가 없어 흰색으로 렌더되는 문제를 보정한다.
+    질감(프린트)은 UV가 없어 적용 불가하므로 단색만 입힌다.
+    """
+    try:
+        import os
+        import numpy as np
+        import trimesh
+        thumb = os.path.join(os.path.dirname(source_cloth_path), "thumbnail.jpg")
+        if not os.path.exists(thumb):
+            return
+        r, g, b = _dominant_color(thumb)
+        m = trimesh.load(glb_path, force="mesh")
+        vc = np.tile(np.array([r, g, b, 255], np.uint8), (len(m.vertices), 1))
+        m.visual = trimesh.visual.ColorVisuals(m, vertex_colors=vc)
+        m.export(glb_path)
+        print(f"[BlenderCloth] 옷 색 적용: #{r:02X}{g:02X}{b:02X} ({os.path.basename(os.path.dirname(source_cloth_path))})")
+    except Exception as e:
+        print(f"[BlenderCloth] 옷 색 적용 실패(무시): {e}")
+
+
 def fit_cloth_blender(cloth_glb_path: str, body_glb_path: str,
                       cloth_type: str, job_id: str,
                       measurements: dict | None = None) -> str:
@@ -304,6 +342,8 @@ def fit_cloth_blender(cloth_glb_path: str, body_glb_path: str,
                 _p = output_path.replace('.glb', _suf)
                 if os.path.exists(_p):
                     os.unlink(_p)
+            # 옷 썸네일 대표 색을 입힘 (모델에 색이 없어 흰색으로 나오는 문제 보정)
+            _apply_thumbnail_color(output_path, cloth_glb_path)
             kb = os.path.getsize(output_path) // 1024
             print(f"[BlenderCloth] OK {cloth_type} -> {output_rel} ({kb}KB)")
             return output_rel

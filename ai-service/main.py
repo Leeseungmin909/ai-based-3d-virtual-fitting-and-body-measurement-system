@@ -2,14 +2,25 @@ import os
 import uvicorn
 from typing import Optional
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import FileResponse
 import shutil, uuid, asyncio
 from core.job_store import JobStore
 from core.pipeline import run_pipeline
 
 app = FastAPI(title="Avatar Photo System")
+
+# 모바일 앱(model-viewer WebView 등)이 GLB/이미지를 교차 출처로 가져올 수 있도록 허용
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.mount("/static",  StaticFiles(directory="static"),  name="static")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
