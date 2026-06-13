@@ -183,10 +183,9 @@ def main():
             _o.scale = (0.01, 0.01, 0.01)
         apply_transform(_both, scale=True)
         cx0, cx1, cy0, cy1, cz0, cz1 = get_bbox(cloth_obj)
-        print(f"[Cloth] cm→m 변환 완료")
+        print("[Cloth] cm→m 변환 완료")
 
     cloth_depth = cy1 - cy0
-    cz_ctr = (cz0 + cz1) / 2
     cx_ctr = (cx0 + cx1) / 2
     cy_ctr = (cy0 + cy1) / 2
     print(f"[Cloth] Cloth: h={cz1-cz0:.3f}m  depth={cloth_depth:.3f}m  faces={len(cloth_obj.data.polygons)}")
@@ -195,7 +194,6 @@ def main():
     import numpy as np
     def _save_verts_gltf(obj, path):
         """Blender 월드 좌표(Z-up) → GLTF(Y-up): (X,Y,Z)_B → (X,Z,-Y)_G"""
-        import mathutils
         vs = [obj.matrix_world @ v.co for v in obj.data.vertices]
         arr = np.array([[v.x, v.z, -v.y] for v in vs], dtype=np.float32)
         np.save(path, arr)
@@ -269,7 +267,7 @@ def main():
     for _o in _both:
         _o.location = _loc
     apply_transform(_both, location=True)
-    print(f"[Cloth] 위치 정렬 완료")
+    print("[Cloth] 위치 정렬 완료")
 
     # ⑦ 핀 그룹: 상단 고정
     verts  = cloth_obj.data.vertices
