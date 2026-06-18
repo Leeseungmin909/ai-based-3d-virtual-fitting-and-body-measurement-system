@@ -176,14 +176,19 @@ async def fit_from_library(
     with open(photo_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    def _lib(folder, name):
+    def _lib(name):
+        # 백엔드는 clothes 루트 기준 경로를 보냄 (예: "top/top_001/model.glb").
+        # 실제 폴더 구조(top/bottom)에 맞춰 clothes/{받은경로} 로 해석한다.
         if not name:
             return None
-        p = f"clothes/{folder}/{name}"
+        n = name.replace("\\", "/").lstrip("/")
+        if n.startswith("clothes/"):
+            n = n[len("clothes/"):]
+        p = f"clothes/{n}"
         return p if os.path.exists(p) else None
 
-    shirt_path = _lib("상의", shirt)
-    pants_path = _lib("하의", pants)
+    shirt_path = _lib(shirt)
+    pants_path = _lib(pants)
 
     job_store.set(job_id, {
         "status":          "uploaded",
