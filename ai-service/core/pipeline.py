@@ -7,7 +7,7 @@ from core.step4_export import export_glb
 from core.step5_render import render_avatar_views
 from core.step_blender_cloth import fit_cloth_blender
 from core.measure_body import measure_body_cm
-from core.merge_glb import merge_glbs
+from core.merge_glb import merge_glbs, clip_top_under_bottom
 
 async def run_pipeline(job_id: str, job_store: JobStore):
     loop = asyncio.get_event_loop()
@@ -78,11 +78,17 @@ async def run_pipeline(job_id: str, job_store: JobStore):
 
         # STEP 4.6: 몸 + 피팅된 옷을 하나의 GLB로 병합 (앱 뷰어는 단일 GLB만 표시)
         job_mid = job_store.get(job_id) or {}
-        cloth_paths = []
-        for key in ("shirt_glb_url", "pants_glb_url"):
-            raw = (job_mid.get(key) or "").lstrip("/")
-            if raw and os.path.exists(raw) and not raw.lower().endswith(_IMG_EXT):
-                cloth_paths.append(raw)
+        shirt_p = (job_mid.get("shirt_glb_url") or "").lstrip("/")
+        pants_p = (job_mid.get("pants_glb_url") or "").lstrip("/")
+
+        def _valid_cloth(p):
+            return p and os.path.exists(p) and not p.lower().endswith(_IMG_EXT)
+
+        # 상·하의가 모두 있으면 허리 충돌 방지: 상의 밑단을 허리선에서 잘라 하의가 덮게 함
+        if _valid_cloth(shirt_p) and _valid_cloth(pants_p):
+            clip_top_under_bottom(shirt_p, pants_p)
+
+        cloth_paths = [p for p in (shirt_p, pants_p) if _valid_cloth(p)]
 
         display_glb = glb_path
         if cloth_paths:
@@ -96,10 +102,14 @@ async def run_pipeline(job_id: str, job_store: JobStore):
             except Exception as merge_err:
                 print(f"[Pipeline] GLB 병합 실패, 맨몸 GLB 사용: {merge_err}")
 
-        # STEP 5: 미리보기 렌더링
+        # STEP 5: 미리보기 렌더링 (선택 — 실패해도 피팅은 완료. 앱은 PNG가 아닌 GLB 뷰어 사용)
         job_store.update(job_id, step="렌더링 중...", progress=90)
-        render_paths = await loop.run_in_executor(
-            None, render_avatar_views, smplx_data, None, job_id)
+        try:
+            render_paths = await loop.run_in_executor(
+                None, render_avatar_views, smplx_data, None, job_id)
+        except Exception as render_err:
+            print(f"[Pipeline] 렌더링 실패(무시), 미리보기 없이 진행: {render_err}")
+            render_paths = []
 
         # STEP 6: 결과 매니페스트 JSON (Java 서버가 가져가 DB에 저장 → result_json_url)
         job_after = job_store.get(job_id) or {}

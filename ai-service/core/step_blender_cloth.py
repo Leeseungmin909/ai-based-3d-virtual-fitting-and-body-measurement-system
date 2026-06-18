@@ -219,6 +219,33 @@ def _transfer_deformation(proxy_orig_path: str, proxy_def_path: str,
     print(f"[BlenderCloth] IDW transfer: {total_verts} verts → {out_path} ({kb}KB)")
 
 
+def _fix_poke_through(cloth_glb_path: str, body_glb_path: str, margin: float = 0.006) -> None:
+    """몸을 뚫고 나온(또는 몸 표면에 묻힌) 옷 정점만 몸 바깥으로 밀어 살 비침을 없앤다.
+
+    옷 전체를 부풀리지 않고 '뚫린 부위'만 보정하므로 붕 뜨는 느낌이 적다.
+    각 옷 정점에서 가장 가까운 몸 정점의 법선 기준으로, 몸 표면보다 margin(m)만큼
+    바깥에 오도록 모자란 정점만 밀어낸다.
+    """
+    try:
+        import trimesh
+        import numpy as np
+        from scipy.spatial import cKDTree
+        cloth = trimesh.load(cloth_glb_path, force="mesh")
+        body = trimesh.load(body_glb_path, force="mesh")
+        bn = body.vertex_normals
+        tree = cKDTree(body.vertices)
+        _, idx = tree.query(cloth.vertices)
+        n = bn[idx]
+        signed = np.einsum("ij,ij->i", cloth.vertices - body.vertices[idx], n)  # 몸 표면 기준 바깥 거리
+        need = signed < margin   # 몸 안쪽/표면 근처(=살 비침) 정점만
+        if need.any():
+            cloth.vertices[need] += n[need] * (margin - signed[need])[:, None]
+            cloth.export(cloth_glb_path)
+            print(f"[BlenderCloth] poke-through 보정: {int(need.sum())}개 정점")
+    except Exception as e:
+        print(f"[BlenderCloth] poke-through 보정 실패(무시): {e}")
+
+
 def _dominant_color(thumb_path: str):
     """상품 썸네일 중앙 영역에서 배경(흰색)을 제외한 대표 색(RGB)을 추출한다."""
     import numpy as np
@@ -342,6 +369,8 @@ def fit_cloth_blender(cloth_glb_path: str, body_glb_path: str,
                 _p = output_path.replace('.glb', _suf)
                 if os.path.exists(_p):
                     os.unlink(_p)
+            # 어깨 등 살 비침(poke-through) 보정: 뚫고 나온 옷 정점만 몸 바깥으로 밀기
+            _fix_poke_through(output_path, os.path.abspath(body_glb_path))
             # 옷 썸네일 대표 색을 입힘 (모델에 색이 없어 흰색으로 나오는 문제 보정)
             _apply_thumbnail_color(output_path, cloth_glb_path)
             kb = os.path.getsize(output_path) // 1024
