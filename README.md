@@ -3,7 +3,7 @@
 
 This project generates an **SMPL-X 3D human mesh** from a user's full-body photo and real height, compares the garment's **actual measurements and the user's body shape** to determine whether it fits, and lets the user view the clothed **3D avatar** in a mobile app. Python generates the 3D human mesh and body measurements, Spring Boot powers the backend API, and Flutter implements the mobile interface.
 
-![시스템 구조](images/architecture.png)
+<img width="2200" height="1440" alt="Image" src="https://github.com/user-attachments/assets/50cf0f3e-e660-4fbb-98b1-7dc4f6f81e13" />
 
 ---
 
