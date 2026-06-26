@@ -150,9 +150,9 @@ flutter run
 
 | Name | Position | Responsibilities |
 | :--- | :--- | :--- |
-| **Lee Seungmin** (Lead) | Backend | • Design & implementation of the Spring Boot REST API server<br>• DB modeling for users, clothing, body measurements, and fitting history (JPA)<br>• JWT authentication & garment fit decision logic<br>• Data relay between Flutter ↔ Python AI server |
-| **Choi Yeseong** | Frontend | • Design & implementation of the Flutter mobile app UI/UX<br>• Login, height input, clothing list, and fitting history screens<br>• GLB 3D avatar viewer integration<br>• Spring Boot API integration |
-| **Kwak Donghyun** | AI | • SMPL-X-based 3D human mesh generation & scale correction<br>• Extraction of body dimensions (shoulders, chest, waist, hips, etc.)<br>• Garment alignment via Blender cloth simulation<br>• JSON & 3D (GLB) result output |
+| **Seungmin Lee** (Lead) | Backend | • Design & implementation of the Spring Boot REST API server<br>• DB modeling for users, clothing, body measurements, and fitting history (JPA)<br>• JWT authentication & garment fit decision logic<br>• Data relay between Flutter ↔ Python AI server |
+| **Yeseong Choi** | Frontend | • Design & implementation of the Flutter mobile app UI/UX<br>• Login, height input, clothing list, and fitting history screens<br>• GLB 3D avatar viewer integration<br>• Spring Boot API integration |
+| **Donghyeon Kwak** | AI | • SMPL-X-based 3D human mesh generation & scale correction<br>• Extraction of body dimensions (shoulders, chest, waist, hips, etc.)<br>• Garment alignment via Blender cloth simulation<br>• JSON & 3D (GLB) result output |
 
 
-> Dong-eui University, Dept. of Computer Software · Capstone Design · Advisor: Prof. Kwon Soon-gak · Fitting Team
+> Dong-eui University, Dept. of Computer Software · Capstone Design · Advisor: Prof. Soon-gak kwon · Fitting Team
